@@ -12,7 +12,10 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -45,7 +48,7 @@ public class GeraFront extends AbstractMojo {
                 List<Class> onlyEntities = scanClasses();
                 for (Class c : onlyEntities) {
                     //geraFront(c.getCanonicalName());
-                    System.out.println("mvn br.com.munif.vicente:g:0.0.1-SNAPSHOT:front -Dentidade="+c.getCanonicalName());
+                    System.out.println("mvn br.com.munif.vicente:g:0.0.1-SNAPSHOT:front -Dentidade=" + c.getCanonicalName());
                 }
 
             } else {
@@ -255,8 +258,14 @@ public class GeraFront extends AbstractMojo {
                 + "import { Location } from '@angular/common';\n"
                 + "import { " + ne + "Service } from '../" + ne.toLowerCase() + ".service';\n");
         for (Field f : atributos) {
-            if (f.isAnnotationPresent(ManyToOne.class)) {
+            if (f.isAnnotationPresent(ManyToOne.class) ) {
                 fw.write("import { " + f.getType().getSimpleName() + "Service } from '../../" + f.getType().getSimpleName().toLowerCase() + "/" + f.getType().getSimpleName().toLowerCase() + ".service';\n");
+            }
+        }
+        for (Field f : atributos) {
+            if (f.isAnnotationPresent(ManyToMany.class) ) {
+                Class tipo = Util.getTipoGenerico(f);
+                fw.write("import { " + tipo.getSimpleName() + "Service } from '../../" + tipo.getSimpleName().toLowerCase() + "/" + tipo.getSimpleName().toLowerCase() + ".service';\n");
             }
         }
 
@@ -276,6 +285,12 @@ public class GeraFront extends AbstractMojo {
         for (Field f : atributos) {
             if (f.isAnnotationPresent(ManyToOne.class)) {
                 fw.write(",protected " + Util.primeiraMinuscula(f.getType().getSimpleName()) + "Service:" + f.getType().getSimpleName() + "Service");
+            }
+        }
+        for (Field f : atributos) {
+            if (f.isAnnotationPresent(ManyToMany.class)) {
+                Class tipo = Util.getTipoGenerico(f);
+                fw.write(",protected " + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service:" + tipo.getSimpleName() + "Service");
             }
         }
 
@@ -341,11 +356,30 @@ public class GeraFront extends AbstractMojo {
 
     public void geraCampoAtributo(FileWriter fw, Field atributo) throws IOException {
         Class tipo = atributo.getType();
-        if (atributo.isAnnotationPresent(ManyToOne.class)) {
+        if (atributo.isAnnotationPresent(OneToOne.class)) {
+            fw.write("<!--OneToOne-->"
+                    + "");
+
+        } else if (atributo.isAnnotationPresent(ManyToMany.class)) {
+            tipo=Util.getTipoGenerico(atributo);
             fw.write(""
                     + "  <div>\n"
                     + "    <label>" + atributo.getName().toUpperCase() + ":\n"
-                    + "      <vic-many-to-one [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + atributo.getName() + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" ></vic-many-to-one>\n"
+                    + "      <vic-many-to-many [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" ></vic-many-to-many>\n"
+                    + "    </label>\n"
+                    + "  </div>"
+                    + "");
+
+        } else if (atributo.isAnnotationPresent(OneToMany.class)) {
+            tipo=Util.getTipoGenerico(atributo);
+            fw.write("<!--OneToMany-->"
+                    + "");
+
+        } else if (atributo.isAnnotationPresent(ManyToOne.class)) {
+            fw.write(""
+                    + "  <div>\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + ":\n"
+                    + "      <vic-many-to-one [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" ></vic-many-to-one>\n"
                     + "    </label>\n"
                     + "  </div>"
                     + "");
@@ -386,8 +420,8 @@ public class GeraFront extends AbstractMojo {
                 + "  constructor(protected service: " + ne + "Service, protected router: Router, protected route: ActivatedRoute) {\n"
                 + "    super(service,router,route);\n");
         fw.write(""
-                + "    this.colunas = [{ field: \""+primeiroAtributo.getName()+"\", label: \""+primeiroAtributo.getName().toUpperCase()+"\" }];\n"
-                + "    this.consulta = { hql: \"obj."+primeiroAtributo.getName()+" like '_pesquisa%' \", orderBy: \""+primeiroAtributo.getName()+"\" };\n");
+                + "    this.colunas = [{ field: \"" + primeiroAtributo.getName() + "\", label: \"" + primeiroAtributo.getName().toUpperCase() + "\" }];\n"
+                + "    this.consulta = { hql: \"obj." + primeiroAtributo.getName() + " like '_pesquisa%' \", orderBy: \"" + primeiroAtributo.getName() + "\" };\n");
         fw.write(""
                 + "\n"
                 + "  }\n"
