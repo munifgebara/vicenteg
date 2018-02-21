@@ -44,7 +44,8 @@ public class GeraFront extends AbstractMojo {
             if ("all".equals(nomeCompletoEntidade)) {
                 List<Class> onlyEntities = scanClasses();
                 for (Class c : onlyEntities) {
-                    geraFront(c.getCanonicalName());
+                    //geraFront(c.getCanonicalName());
+                    System.out.println("mvn br.com.munif.vicente:g:0.0.1-SNAPSHOT:front -Dentidade="+c.getCanonicalName());
                 }
 
             } else {
@@ -274,7 +275,7 @@ public class GeraFront extends AbstractMojo {
                 + "  constructor(protected service: " + ne + "Service, protected router: Router, protected route: ActivatedRoute");
         for (Field f : atributos) {
             if (f.isAnnotationPresent(ManyToOne.class)) {
-                fw.write(",protected " + Util.primeiraMinuscula(f.getType().getSimpleName()) + "Service:" + f.getType().getSimpleName()+"Service");
+                fw.write(",protected " + Util.primeiraMinuscula(f.getType().getSimpleName()) + "Service:" + f.getType().getSimpleName() + "Service");
             }
         }
 
@@ -358,7 +359,10 @@ public class GeraFront extends AbstractMojo {
         }
     }
 
-    private void geraListaTS(String pastaModulo, String nce, String npb, String ne) throws IOException {
+    private void geraListaTS(String pastaModulo, String nce, String npb, String ne) throws IOException, ClassNotFoundException {
+        Class classe = classLoader.loadClass(nce);
+        List<Field> atributos = Util.getTodosAtributosNaoBase(classe);
+        Field primeiroAtributo = atributos.get(0);
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/lista/lista.component.ts";
@@ -380,9 +384,11 @@ public class GeraFront extends AbstractMojo {
                 + "export class ListaComponent extends SuperListaComponent {\n"
                 + "\n"
                 + "  constructor(protected service: " + ne + "Service, protected router: Router, protected route: ActivatedRoute) {\n"
-                + "    super(service,router,route);\n"
-                + "    this.colunas = [{ field: \"nome\", label: \"Nome\" }];\n"
-                + "    this.consulta = { hql: \"obj.nome like '_pesquisa%' \", orderBy: \"nome\" };\n"
+                + "    super(service,router,route);\n");
+        fw.write(""
+                + "    this.colunas = [{ field: \""+primeiroAtributo.getName()+"\", label: \""+primeiroAtributo.getName().toUpperCase()+"\" }];\n"
+                + "    this.consulta = { hql: \"obj."+primeiroAtributo.getName()+" like '_pesquisa%' \", orderBy: \""+primeiroAtributo.getName()+"\" };\n");
+        fw.write(""
                 + "\n"
                 + "  }\n"
                 + "\n"
