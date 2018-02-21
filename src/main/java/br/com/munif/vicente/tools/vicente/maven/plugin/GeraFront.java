@@ -4,6 +4,7 @@ import br.com.munif.framework.vicente.core.Utils;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -51,19 +53,18 @@ public class GeraFront extends AbstractMojo {
         } catch (IOException ex) {
             Logger.getLogger(GeraFront.class
                     .getName()).log(Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(GeraFront.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
 
-    public void geraFront(String nce) throws IOException {
+    public void geraFront(String nce) throws IOException, ClassNotFoundException {
         nomePacoteBase = nce.substring(0, nce.lastIndexOf(".domain"));
         nomeEntidade = nce.substring(nce.lastIndexOf('.') + 1);
         getLog().info("nomeCompletoEntidade:" + nce);
         String pastaModulo = Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/" + nomeEntidade.toLowerCase());
-        if (new File(pastaModulo).exists()) {
-            System.out.println("-----> JA existe " + pastaModulo);
-            return;
-        }
+        boolean jaExiste = new File(pastaModulo).exists();
         criaPastasModulo(pastaModulo);
         geraModuleTS(pastaModulo, nce, nomePacoteBase, nomeEntidade);
         geraServiceTS(pastaModulo, nce, nomePacoteBase, nomeEntidade);
@@ -77,26 +78,27 @@ public class GeraFront extends AbstractMojo {
         geraListaTS(pastaModulo, nce, nomePacoteBase, nomeEntidade);
         geraListaCSS(pastaModulo, nce, nomePacoteBase, nomeEntidade);
         geraListaHTML(pastaModulo, nce, nomePacoteBase, nomeEntidade);
-        Util.adicionaLinha(Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/app.component.html"), "<!-- MENU -->", ""
-                + "                    <li class=\"nav-item\">\n"
-                + "                        <a class=\"nav-link\" [routerLink]=\"['./" + nomeEntidade.toLowerCase() + "']\">\n"
-                + "                            <span data-feather=\"file\"></span>\n"
-                + "                            " + nomeEntidade + "\n"
-                + "                        </a>\n"
-                + "                    </li>"
-                + "");
-        Util.adicionaLinha(Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/app.module.ts"), "app.module.ts1", ""
-                + "import { "+nomeEntidade+"Module} from './"+nomeEntidade.toLowerCase()+"/"+nomeEntidade.toLowerCase()+".module';\n"
-                + "import { "+nomeEntidade+"Service} from './"+nomeEntidade.toLowerCase()+"/"+nomeEntidade.toLowerCase()+".service';"
-                + "");
-        Util.adicionaLinha(Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/app.module.ts"), "app.module.ts2", ""
-                + "    "+nomeEntidade+"Module,"
-                + "");
-        Util.adicionaLinha(Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/app.module.ts"), "app.module.ts3", ""
-                + "    "+nomeEntidade+"Service,"
-                + "");
+        if (!jaExiste) {
+            Util.adicionaLinha(Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/app.component.html"), "<!-- MENU -->", ""
+                    + "                    <li class=\"nav-item\">\n"
+                    + "                        <a class=\"nav-link\" [routerLink]=\"['./" + nomeEntidade.toLowerCase() + "']\">\n"
+                    + "                            <span data-feather=\"file\"></span>\n"
+                    + "                            " + nomeEntidade + "\n"
+                    + "                        </a>\n"
+                    + "                    </li>"
+                    + "");
+            Util.adicionaLinha(Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/app.module.ts"), "app.module.ts1", ""
+                    + "import { " + nomeEntidade + "Module} from './" + nomeEntidade.toLowerCase() + "/" + nomeEntidade.toLowerCase() + ".module';\n"
+                    + "import { " + nomeEntidade + "Service} from './" + nomeEntidade.toLowerCase() + "/" + nomeEntidade.toLowerCase() + ".service';"
+                    + "");
+            Util.adicionaLinha(Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/app.module.ts"), "app.module.ts2", ""
+                    + "    " + nomeEntidade + "Module,"
+                    + "");
+            Util.adicionaLinha(Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/app.module.ts"), "app.module.ts3", ""
+                    + "    " + nomeEntidade + "Service,"
+                    + "");
+        }
 
-        
     }
 
     private void criaPastasModulo(String pastaModulo) throws IOException {
@@ -237,7 +239,11 @@ public class GeraFront extends AbstractMojo {
         fw.close();
     }
 
-    private void geraDetalhesTS(String pastaModulo, String nce, String npb, String ne) throws IOException {
+    private void geraDetalhesTS(String pastaModulo, String nce, String npb, String ne) throws IOException, ClassNotFoundException {
+        Class classe = classLoader.loadClass(nce);
+        List<Field> atributos = Util.getTodosAtributosNaoBase(classe);
+        Field primeiroAtributo = atributos.get(0);
+
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/detalhes/detalhes.component.ts";
@@ -246,7 +252,14 @@ public class GeraFront extends AbstractMojo {
                 + "import { Component, OnInit } from '@angular/core';\n"
                 + "import { Router, ActivatedRoute, Params } from '@angular/router';\n"
                 + "import { Location } from '@angular/common';\n"
-                + "import { " + ne + "Service } from '../"+ne.toLowerCase()+".service';\n"
+                + "import { " + ne + "Service } from '../" + ne.toLowerCase() + ".service';\n");
+        for (Field f : atributos) {
+            if (f.isAnnotationPresent(ManyToOne.class)) {
+                fw.write("import { " + f.getType().getSimpleName() + "Service } from '../../" + f.getType().getSimpleName().toLowerCase() + "/" + f.getType().getSimpleName().toLowerCase() + ".service';\n");
+            }
+        }
+
+        fw.write(""
                 + "import { VicReturn } from '../../comum/vic-return';\n"
                 + "import { SuperDetalhesComponent } from '../../comum/super-detalhes';\n"
                 + "\n"
@@ -258,7 +271,15 @@ public class GeraFront extends AbstractMojo {
                 + "})\n"
                 + "export class DetalhesComponent extends SuperDetalhesComponent {\n"
                 + "\n"
-                + "  constructor(protected service: " + ne + "Service, protected router: Router, protected route: ActivatedRoute) {\n"
+                + "  constructor(protected service: " + ne + "Service, protected router: Router, protected route: ActivatedRoute");
+        for (Field f : atributos) {
+            if (f.isAnnotationPresent(ManyToOne.class)) {
+                fw.write(",protected " + Util.primeiraMinuscula(f.getType().getSimpleName()) + "Service:" + f.getType().getSimpleName()+"Service");
+            }
+        }
+
+        fw.write(""
+                + ") {\n"
                 + "    super(service,router,route);\n"
                 + "  }\n"
                 + "\n"
@@ -280,7 +301,10 @@ public class GeraFront extends AbstractMojo {
         fw.close();
     }
 
-    private void geraDetalhesHTML(String pastaModulo, String nce, String npb, String ne) throws IOException {
+    private void geraDetalhesHTML(String pastaModulo, String nce, String npb, String ne) throws IOException, ClassNotFoundException {
+        Class classe = classLoader.loadClass(nce);
+        List<Field> atributos = Util.getTodosAtributosNaoBase(classe);
+        Field primeiroAtributo = atributos.get(0);
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/detalhes/detalhes.component.html";
@@ -290,13 +314,12 @@ public class GeraFront extends AbstractMojo {
                 + "  Carregando....\n"
                 + "</div>\n"
                 + "<div *ngIf=\"selecionado\">\n"
-                + "  <h2>{{ selecionado.nome | uppercase }}</h2>\n"
-                + "  <div>\n"
-                + "    <label>Nome:\n"
-                + "      <input type=\"text\" id=\"inNome\" name=\"nome\" placeholder=\"Nome\" [(ngModel)]=\"selecionado.nome\" />\n"
-                + "    </label>\n"
-                + "  </div>\n"
-                + "  <div>\n"
+                + "  <h2>{{ selecionado." + primeiroAtributo.getName() + " | uppercase }}</h2>\n");
+        for (Field atributo : atributos) {
+            geraCampoAtributo(fw, atributo);
+        }
+        fw.write(
+                "  <div>\n"
                 + "    <button type=\"button\" class=\"btn btn-success\" (click)=\"salvar()\">Salvar</button>\n"
                 + "    <button type=\"button\" class=\"btn btn-warning\" (click)=\"cancelar()\">Cancelar</button>\n"
                 + "    <button type=\"button\" class=\"btn btn-danger\" (click)=\"excluir()\">Excluir</button>\n"
@@ -315,6 +338,26 @@ public class GeraFront extends AbstractMojo {
         fw.close();
     }
 
+    public void geraCampoAtributo(FileWriter fw, Field atributo) throws IOException {
+        Class tipo = atributo.getType();
+        if (atributo.isAnnotationPresent(ManyToOne.class)) {
+            fw.write(""
+                    + "  <div>\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + ":\n"
+                    + "      <vic-many-to-one [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + atributo.getName() + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" ></vic-many-to-one>\n"
+                    + "    </label>\n"
+                    + "  </div>"
+                    + "");
+
+        } else {
+            fw.write("  <div>\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + ":\n"
+                    + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" />\n"
+                    + "    </label>\n"
+                    + "  </div>\n");
+        }
+    }
+
     private void geraListaTS(String pastaModulo, String nce, String npb, String ne) throws IOException {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
@@ -323,7 +366,7 @@ public class GeraFront extends AbstractMojo {
         fw.write(""
                 + "import { Component, OnInit } from '@angular/core';\n"
                 + "import { Router, ActivatedRoute, Params } from '@angular/router';\n"
-                + "import { " + ne + "Service } from '../"+minusculas+".service';\n"
+                + "import { " + ne + "Service } from '../" + minusculas + ".service';\n"
                 + "import { BaseEntity } from \"../../comum/base-entity\";\n"
                 + "import { VicReturn } from '../../comum/vic-return';\n"
                 + "import { SuperListaComponent } from '../../comum/super-lista';\n"

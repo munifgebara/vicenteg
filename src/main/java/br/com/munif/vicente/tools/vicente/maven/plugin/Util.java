@@ -5,6 +5,8 @@
  */
 package br.com.munif.vicente.tools.vicente.maven.plugin;
 
+import br.com.munif.framework.vicente.domain.BaseEntity;
+import br.com.munif.framework.vicente.domain.tenancyfields.VicTenancyFieldsBaseEntity;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 
@@ -101,6 +103,23 @@ public class Util {
         return aRetornar;
     }
 
+    public static List<Field> getTodosAtributosNaoBase(Class classe) throws SecurityException {
+        List<Field> aRetornar = new ArrayList<Field>();
+        List<Field> aRemover = new ArrayList<Field>();
+        if (!classe.getSuperclass().equals(BaseEntity.class)&&!classe.getSuperclass().equals(VicTenancyFieldsBaseEntity.class)) {
+            aRetornar.addAll(getTodosAtributosNaoBase(classe.getSuperclass()));
+        }
+        aRetornar.addAll(Arrays.asList(classe.getDeclaredFields()));
+        for (Field f : aRetornar) {
+            if (Modifier.isStatic(f.getModifiers())) {
+                aRemover.add(f);
+            }
+        }
+        aRetornar.removeAll(aRemover);
+        return aRetornar;
+    }
+
+
     public static ClassLoader getClassLoader(MavenProject project) {
         ClassLoader aRetornar = null;
         try {
@@ -124,7 +143,7 @@ public class Util {
     }
 
     public static Field primeiroAtributo(Class classe) {
-        return getTodosAtributosMenosIdAutomatico(classe).get(0);
+        return getTodosAtributosNaoBase(classe).get(0);
     }
 
     public static Class getTipoGenerico(Field atributo) {
