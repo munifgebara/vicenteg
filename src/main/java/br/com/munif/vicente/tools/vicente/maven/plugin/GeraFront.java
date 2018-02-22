@@ -6,9 +6,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.persistence.Entity;
@@ -47,8 +50,8 @@ public class GeraFront extends AbstractMojo {
             if ("all".equals(nomeCompletoEntidade)) {
                 List<Class> onlyEntities = scanClasses();
                 for (Class c : onlyEntities) {
-                    //geraFront(c.getCanonicalName());
-                    System.out.println("mvn br.com.munif.vicente:g:0.0.1-SNAPSHOT:front -Dentidade=" + c.getCanonicalName());
+                    geraFront(c.getCanonicalName());
+                    //System.out.println("mvn br.com.munif.vicente:g:0.0.1-SNAPSHOT:front -Dentidade=" + c.getCanonicalName());
                 }
 
             } else {
@@ -119,6 +122,7 @@ public class GeraFront extends AbstractMojo {
         fw = new FileWriter(arquivo, false);
         fw.write(""
                 + "import { NgModule } from '@angular/core';\n"
+                + "import { OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';\n"
                 + "import { FormsModule }   from '@angular/forms';\n"
                 + "import { CommonModule } from '@angular/common';\n"
                 + "import { VicComponentsModule } from '../vic-components/vic-components.module';\n"
@@ -131,7 +135,7 @@ public class GeraFront extends AbstractMojo {
                 + "@NgModule({\n"
                 + "  imports: [\n"
                 + "    CommonModule,\n"
-                + "    FormsModule,\n"
+                + "    FormsModule, OwlDateTimeModule, OwlNativeDateTimeModule,\n"
                 + "    " + ne + "RoutingModule,\n"
                 + "    VicComponentsModule\n"
                 + "  ],\n"
@@ -244,7 +248,9 @@ public class GeraFront extends AbstractMojo {
     }
 
     private void geraDetalhesTS(String pastaModulo, String nce, String npb, String ne) throws IOException, ClassNotFoundException {
+        Set<Class> jaImportou = new HashSet<>();
         Class classe = classLoader.loadClass(nce);
+
         List<Field> atributos = Util.getTodosAtributosNaoBase(classe);
         Field primeiroAtributo = atributos.get(0);
 
@@ -258,14 +264,21 @@ public class GeraFront extends AbstractMojo {
                 + "import { Location } from '@angular/common';\n"
                 + "import { " + ne + "Service } from '../" + ne.toLowerCase() + ".service';\n");
         for (Field f : atributos) {
-            if (f.isAnnotationPresent(ManyToOne.class) ) {
-                fw.write("import { " + f.getType().getSimpleName() + "Service } from '../../" + f.getType().getSimpleName().toLowerCase() + "/" + f.getType().getSimpleName().toLowerCase() + ".service';\n");
+            if (f.isAnnotationPresent(ManyToOne.class)) {
+                if (!jaImportou.contains(f.getType())) {
+                    fw.write("import { " + f.getType().getSimpleName() + "Service } from '../../" + f.getType().getSimpleName().toLowerCase() + "/" + f.getType().getSimpleName().toLowerCase() + ".service';\n");
+                    jaImportou.add(f.getType());
+                }
+
             }
         }
         for (Field f : atributos) {
-            if (f.isAnnotationPresent(ManyToMany.class) ) {
+            if (f.isAnnotationPresent(ManyToMany.class)) {
                 Class tipo = Util.getTipoGenerico(f);
-                fw.write("import { " + tipo.getSimpleName() + "Service } from '../../" + tipo.getSimpleName().toLowerCase() + "/" + tipo.getSimpleName().toLowerCase() + ".service';\n");
+                if (!jaImportou.contains(tipo)) {
+                    fw.write("import { " + tipo.getSimpleName() + "Service } from '../../" + tipo.getSimpleName().toLowerCase() + "/" + tipo.getSimpleName().toLowerCase() + ".service';\n");
+                    jaImportou.add(tipo);
+                }
             }
         }
 
@@ -282,18 +295,9 @@ public class GeraFront extends AbstractMojo {
                 + "export class DetalhesComponent extends SuperDetalhesComponent {\n"
                 + "\n"
                 + "  constructor(protected service: " + ne + "Service, protected router: Router, protected route: ActivatedRoute");
-        for (Field f : atributos) {
-            if (f.isAnnotationPresent(ManyToOne.class)) {
-                fw.write(",protected " + Util.primeiraMinuscula(f.getType().getSimpleName()) + "Service:" + f.getType().getSimpleName() + "Service");
-            }
+        for (Class tipo : jaImportou) {
+            fw.write(",protected " + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service:" + tipo.getSimpleName() + "Service");
         }
-        for (Field f : atributos) {
-            if (f.isAnnotationPresent(ManyToMany.class)) {
-                Class tipo = Util.getTipoGenerico(f);
-                fw.write(",protected " + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service:" + tipo.getSimpleName() + "Service");
-            }
-        }
-
         fw.write(""
                 + ") {\n"
                 + "    super(service,router,route);\n"
@@ -312,7 +316,15 @@ public class GeraFront extends AbstractMojo {
         String arquivo = pastaModulo + "/detalhes/detalhes.component.css";
         fw = new FileWriter(arquivo, false);
         fw.write(""
-                + ""
+                + ".footer{\n"
+                + "    float: right !important;\n"
+                + "    border: 1px 0px 0px 0px solid black;\n"
+                + "    text-align: right;\n"
+                + "}\n"
+                + "\n"
+                + ".margin-bottom{\n"
+                + "    margin-bottom: 20px;\n"
+                + "}"
         );
         fw.close();
     }
@@ -326,21 +338,36 @@ public class GeraFront extends AbstractMojo {
         String arquivo = pastaModulo + "/detalhes/detalhes.component.html";
         fw = new FileWriter(arquivo, false);
         fw.write(""
-                + "<div *ngIf=\"!selecionado\">\n"
-                + "  Carregando....\n"
-                + "</div>\n"
-                + "<div *ngIf=\"selecionado\">\n"
-                + "  <h2>{{ selecionado." + primeiroAtributo.getName() + " | uppercase }}</h2>\n");
+                + "<div class=\"container\">\n"
+                + "\n"
+                + "  <div *ngIf=\"!selecionado\">\n"
+                + "    Carregando....\n"
+                + "  </div>\n"
+                + "  <div *ngIf=\"selecionado\">\n"
+                + "\n"
+                + "    <h2>{{ selecionado." + primeiroAtributo.getName() + "| uppercase }}</h2>\n"
+                + "\n"
+                + "    <div class=\"row\">\n\n");
+
         for (Field atributo : atributos) {
             geraCampoAtributo(fw, atributo);
         }
-        fw.write(
-                "  <div>\n"
-                + "    <button type=\"button\" class=\"btn btn-success\" (click)=\"salvar()\">Salvar</button>\n"
-                + "    <button type=\"button\" class=\"btn btn-warning\" (click)=\"cancelar()\">Cancelar</button>\n"
-                + "    <button type=\"button\" class=\"btn btn-danger\" (click)=\"excluir()\">Excluir</button>\n"
-                + "  </div>\n"
+        fw.write(""
+                + "</div>\n"
+                + ""
+                + "    <div class=\"row\">\n"
                 + "\n"
+                + "      <div class=\"col-sm-12 text-right\">\n"
+                + "        <button type=\"button\" class=\"btn btn-warning\" (click)=\"cancelar()\">\n"
+                + "          <i class=\"far fa-times-circle\"></i> Cancelar</button>\n"
+                + "        <button type=\"button\" class=\"btn btn-success\" (click)=\"salvar()\">\n"
+                + "          <i class=\"far fa-save\"></i> Salvar</button>\n"
+                + "        <button type=\"button\" class=\"btn btn-danger\" (click)=\"excluir()\">\n"
+                + "          <i class=\"far fa-delete\"></i>Excluir</button>\n"
+                + "      </div>\n"
+                + "    </div>\n"
+                + ""
+                + ""
                 + "  <div class=\"alert alert-danger\" role=\"alert\" *ngIf=\"erro\">\n"
                 + "    {{erro|json}}\n"
                 + "  </div>\n"
@@ -361,34 +388,39 @@ public class GeraFront extends AbstractMojo {
                     + "");
 
         } else if (atributo.isAnnotationPresent(ManyToMany.class)) {
-            tipo=Util.getTipoGenerico(atributo);
+            tipo = Util.getTipoGenerico(atributo);
             fw.write(""
-                    + "  <div>\n"
-                    + "    <label>" + atributo.getName().toUpperCase() + ":\n"
+                    + "  <div class=\"col-sm-12 margin-bottom\">\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
                     + "      <vic-many-to-many [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" ></vic-many-to-many>\n"
-                    + "    </label>\n"
                     + "  </div>"
                     + "");
 
         } else if (atributo.isAnnotationPresent(OneToMany.class)) {
-            tipo=Util.getTipoGenerico(atributo);
+            tipo = Util.getTipoGenerico(atributo);
             fw.write("<!--OneToMany-->"
                     + "");
 
         } else if (atributo.isAnnotationPresent(ManyToOne.class)) {
             fw.write(""
-                    + "  <div>\n"
-                    + "    <label>" + atributo.getName().toUpperCase() + ":\n"
+                    + "  <div class=\"col-sm-12 margin-bottom\">\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
                     + "      <vic-many-to-one [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" ></vic-many-to-one>\n"
-                    + "    </label>\n"
                     + "  </div>"
                     + "");
 
+        } else if (atributo.getType().equals(ZonedDateTime.class)) {
+            fw.write(""
+                    + "  <div class=\"col-sm-12 margin-bottom\">\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
+                    + "      <input [owlDateTime]=\"dt1\" [owlDateTimeTrigger]=\"dt1\" type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" />\n"
+                    + "      <owl-date-time #dt1></owl-date-time>\n"
+                    + "  </div>"
+                    + "");
         } else {
-            fw.write("  <div>\n"
-                    + "    <label>" + atributo.getName().toUpperCase() + ":\n"
-                    + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" />\n"
-                    + "    </label>\n"
+            fw.write("  <div class=\"col-sm-12 margin-bottom\">\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
+                    + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" class=\"form-control\" />\n"
                     + "  </div>\n");
         }
     }
@@ -437,7 +469,9 @@ public class GeraFront extends AbstractMojo {
         String arquivo = pastaModulo + "/lista/lista.component.css";
         fw = new FileWriter(arquivo, false);
         fw.write(""
-                + ""
+                + ".padding-bottom-20{\n"
+                + "    padding-bottom: 20px;\n"
+                + "}"
         );
         fw.close();
     }
@@ -449,14 +483,22 @@ public class GeraFront extends AbstractMojo {
         fw = new FileWriter(arquivo, false);
         fw.write(""
                 + "<h2>Lista {{resposta.quantity}} </h2>\n"
-                + "<div>\n"
-                + "    <label>Pesquisa:\n"
-                + "        <input type=\"text\" id=\"inPesquisa\" name=\"pesquisa\" placeholder=\"Pesquisa\" [(ngModel)]=\"pesquisa\" />\n"
-                + "    </label>\n"
-                + "    <button type=\"button\" class=\"btn btn-info\" (click)=\"pesquisar()\">Pesquisar</button>\n"
-                + "    <button type=\"button\" class=\"btn btn-info\" (click)=\"novo()\">Novo</button>\n"
+                + "<div class=\"row padding-bottom-20\">\n"
+                + "    <div class=\"col-sm-6\">\n"
+                + "        <input type=\"text\" id=\"inPesquisa\" name=\"pesquisa\" placeholder=\"Pesquisa\" class=\"form-control\" [(ngModel)]=\"pesquisa\" />\n"
+                + "    </div>\n"
+                + "    <div class=\"col-sm-3\" >\n"
+                + "        <button type=\"button\" class=\"btn btn-info\" (click)=\"pesquisar()\">\n"
+                + "            <i class=\"fas fa-search\"></i> Pesquisar </button>\n"
+                + "    </div>\n"
+                + "\n"
+                + "    <div class=\"col-sm-3 text-right\">\n"
+                + "        <button type=\"button\" class=\"btn btn-success\" (click)=\"novo()\">\n"
+                + "            <i class=\"far fa-file\"></i> Novo</button>\n"
+                + "    </div>\n"
                 + "</div>\n"
                 + "<vic-tabela [(dados)]=\"resposta\" [colunas]=\"colunas\" (acao)=\"goDetalhes($event)\"></vic-tabela>"
+                + ""
         );
         fw.close();
     }
