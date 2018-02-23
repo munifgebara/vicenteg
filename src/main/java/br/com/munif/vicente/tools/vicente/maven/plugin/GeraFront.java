@@ -147,12 +147,11 @@ public class GeraFront extends AbstractMojo {
                 + "    VicComponentsModule\n"
                 + "  ],\n"
                 + "  declarations: [\n"
-                        + "/*DECLARATIONS*/\n"
-                        + "      CrudComponent, \n"
-                        + "      ListaComponent, \n"
-                        + "      DetalhesComponent\n,"
-                        
-                        + "]\n"
+                + "/*DECLARATIONS*/\n"
+                + "      CrudComponent, \n"
+                + "      ListaComponent, \n"
+                + "      DetalhesComponent\n,"
+                + "]\n"
                 + "})\n"
                 + "export class " + ne + "Module { }\n"
                 + ""
@@ -385,11 +384,6 @@ public class GeraFront extends AbstractMojo {
                 + "  <div class=\"alert alert-danger\" role=\"alert\" *ngIf=\"erro\">\n"
                 + "    {{erro|json}}\n"
                 + "  </div>\n"
-                + "  <div>\n"
-                + "      <vic-system-fields [entidade]=\"selecionado\"></vic-system-fields>\n"
-                + "    </div>\n"
-                + "  \n"
-                + "\n"
                 + "</div>\n"
         );
         fw.close();
@@ -414,7 +408,9 @@ public class GeraFront extends AbstractMojo {
             tipo = Util.getTipoGenerico(atributo);
             String nomeArquivo = atributo.getDeclaringClass().getSimpleName().toLowerCase() + "-" + atributo.getName().toLowerCase();
             fw.write(""
-                    + "  <app-" + nomeArquivo + " [itens]=\"selecionado." + atributo.getName() + "\" [proprietario]=\"selecionado\"></app-" + nomeArquivo + ">\n\n"
+                    + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"selecionado.version!==null \">\n"
+                    + "    <app-" + nomeArquivo + " [itens]=\"selecionado." + atributo.getName() + "\" [proprietario]=\"selecionado\"></app-" + nomeArquivo + ">\n\n"
+                    + "  </div>\n"
                     + "");
             geraComponenteOneToMany(atributo, pastaModulo);
             geraHTMLOneToMany(atributo, pastaModulo);
@@ -684,7 +680,6 @@ public class GeraFront extends AbstractMojo {
                 }
             }
         }
-        System.out.print("--->");
 
         jaImportou.forEach(a -> System.out.print(a.getSimpleName() + " "));
         System.out.println("");
@@ -800,9 +795,9 @@ public class GeraFront extends AbstractMojo {
                 + "");
         fw.close();
         String arquivoModule = pastaModulo + "/" + atributo.getDeclaringClass().getSimpleName().toLowerCase() + ".module.ts";
-        Util.adicionaLinha(arquivoModule, "/*IMPORTS*/", "import { "+nomeClasseCoponente+"Component } from './detalhes/"+nomeArquivo+".component';");
-        
-        Util.adicionaLinha(arquivoModule, "/*DECLARATIONS*/", "      "+nomeClasseCoponente+"Component,");
+        Util.adicionaLinha(arquivoModule, "/*IMPORTS*/", "import { " + nomeClasseCoponente + "Component } from './detalhes/" + nomeArquivo + ".component';");
+
+        Util.adicionaLinha(arquivoModule, "/*DECLARATIONS*/", "      " + nomeClasseCoponente + "Component,");
 
     }
 
@@ -823,7 +818,7 @@ public class GeraFront extends AbstractMojo {
                 + "        <button type=\"button\" class=\"btn btn-success\" (click)=\"edita('new')\">\n"
                 + "            <i class=\"far fa-file\"></i> Novo</button>\n"
                 + "    </h2>\n"
-                + "    <vic-tabela [dados]=\"criaVicReturnItens()\" [colunas]=\"colunas\" (acao)=\"edita($event)\"></vic-tabela>\n"
+                + "    <vic-tabela [dados]=\"criaVicReturnItens()\" [colunas]=\"colunas\" (acao)=\"edita($event)\" [selecionaColunas]=\"false\"></vic-tabela>\n"
                 + "</div>\n"
                 + "\n"
                 + "<div class=\"container\" *ngIf=\"editando\">\n"
