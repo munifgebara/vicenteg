@@ -1,19 +1,24 @@
 package br.com.munif.vicente.tools.vicente.maven.plugin;
 
 import br.com.munif.framework.vicente.core.Utils;
+import static br.com.munif.vicente.tools.vicente.maven.plugin.Util.primeiraMaiuscula;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
@@ -26,6 +31,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.FileUtils;
 
 /**
  *
@@ -119,7 +125,7 @@ public class GeraFront extends AbstractMojo {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/" + minusculas + ".module.ts";
-        fw = new FileWriter(arquivo, false);
+        fw = abreArquivo(arquivo, false);
         fw.write(""
                 + "import { NgModule } from '@angular/core';\n"
                 + "import { OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';\n"
@@ -151,7 +157,7 @@ public class GeraFront extends AbstractMojo {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/" + minusculas + ".service.ts";
-        fw = new FileWriter(arquivo, false);
+        fw = abreArquivo(arquivo, false);
         fw.write(""
                 + "import { Injectable } from '@angular/core';\n"
                 + "import { Http, Headers, Response } from '@angular/http';\n"
@@ -173,7 +179,7 @@ public class GeraFront extends AbstractMojo {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/" + minusculas + "-routing.module.ts";
-        fw = new FileWriter(arquivo, false);
+        fw = abreArquivo(arquivo, false);
         fw.write(""
                 + "import { NgModule } from '@angular/core';\n"
                 + "import { Routes, RouterModule } from '@angular/router';\n"
@@ -205,7 +211,7 @@ public class GeraFront extends AbstractMojo {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/crud/crud.component.ts";
-        fw = new FileWriter(arquivo, false);
+        fw = abreArquivo(arquivo, false);
         fw.write(""
                 + "import { Component, OnInit } from '@angular/core';\n"
                 + " \n"
@@ -226,7 +232,7 @@ public class GeraFront extends AbstractMojo {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/crud/crud.component.css";
-        fw = new FileWriter(arquivo, false);
+        fw = abreArquivo(arquivo, false);
         fw.write(""
                 + ""
         );
@@ -237,7 +243,7 @@ public class GeraFront extends AbstractMojo {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/crud/crud.component.html";
-        fw = new FileWriter(arquivo, false);
+        fw = abreArquivo(arquivo, false);
         fw.write(""
                 + "<div class=\"d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom\">\n"
                 + "  <h1 class=\"h2\">" + ne + "</h1>\n"
@@ -257,7 +263,7 @@ public class GeraFront extends AbstractMojo {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/detalhes/detalhes.component.ts";
-        fw = new FileWriter(arquivo, false);
+        fw = abreArquivo(arquivo, false);
         fw.write(""
                 + "import { Component, OnInit } from '@angular/core';\n"
                 + "import { Router, ActivatedRoute, Params } from '@angular/router';\n"
@@ -314,7 +320,7 @@ public class GeraFront extends AbstractMojo {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/detalhes/detalhes.component.css";
-        fw = new FileWriter(arquivo, false);
+        fw = abreArquivo(arquivo, false);
         fw.write(""
                 + ".footer{\n"
                 + "    float: right !important;\n"
@@ -336,7 +342,7 @@ public class GeraFront extends AbstractMojo {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/detalhes/detalhes.component.html";
-        fw = new FileWriter(arquivo, false);
+        fw = abreArquivo(arquivo, false);
         fw.write(""
                 + "<div class=\"container\">\n"
                 + "\n"
@@ -428,11 +434,12 @@ public class GeraFront extends AbstractMojo {
     private void geraListaTS(String pastaModulo, String nce, String npb, String ne) throws IOException, ClassNotFoundException {
         Class classe = classLoader.loadClass(nce);
         List<Field> atributos = Util.getTodosAtributosNaoBase(classe);
+        List<String> chapa = chapa(classe);
         Field primeiroAtributo = atributos.get(0);
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/lista/lista.component.ts";
-        fw = new FileWriter(arquivo, false);
+        fw = abreArquivo(arquivo, false);
         fw.write(""
                 + "import { Component, OnInit } from '@angular/core';\n"
                 + "import { Router, ActivatedRoute, Params } from '@angular/router';\n"
@@ -449,13 +456,16 @@ public class GeraFront extends AbstractMojo {
                 + "})\n"
                 + "export class ListaComponent extends SuperListaComponent {\n"
                 + "\n"
-                + "  constructor(protected service: " + ne + "Service, protected router: Router, protected route: ActivatedRoute) {\n"
-                + "    super(service,router,route);\n");
+                + "  colunas = [\n");
+        for (String s : chapa) {
+            fw.write("    " + s + "\n");
+        }
+
         fw.write(""
-                + "    this.colunas = [{ field: \"" + primeiroAtributo.getName() + "\", label: \"" + primeiroAtributo.getName().toUpperCase() + "\" }];\n"
-                + "    this.consulta = { hql: \"obj." + primeiroAtributo.getName() + " like '_pesquisa%' \", orderBy: \"" + primeiroAtributo.getName() + "\" };\n");
-        fw.write(""
+                + "  ];\n"
                 + "\n"
+                + "  constructor(protected service: " + ne + "Service, protected router: Router, protected route: ActivatedRoute) {\n"
+                + "    super(service,router,route);\n"
                 + "  }\n"
                 + "\n"
                 + "}"
@@ -467,7 +477,7 @@ public class GeraFront extends AbstractMojo {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/lista/lista.component.css";
-        fw = new FileWriter(arquivo, false);
+        fw = abreArquivo(arquivo, false);
         fw.write(""
                 + ".padding-bottom-20{\n"
                 + "    padding-bottom: 20px;\n"
@@ -480,12 +490,12 @@ public class GeraFront extends AbstractMojo {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/lista/lista.component.html";
-        fw = new FileWriter(arquivo, false);
+        fw = abreArquivo(arquivo, false);
         fw.write(""
                 + "<h2>Lista {{resposta.quantity}} </h2>\n"
                 + "<div class=\"row padding-bottom-20\">\n"
                 + "    <div class=\"col-sm-6\">\n"
-                + "        <input type=\"text\" id=\"inPesquisa\" name=\"pesquisa\" placeholder=\"Pesquisa\" class=\"form-control\" [(ngModel)]=\"pesquisa\" />\n"
+                + "        <input type=\"text\" id=\"inPesquisa\" name=\"pesquisa\" placeholder=\"Pesquisa\" class=\"form-control\" [(ngModel)]=\"pesquisa\" (keypress)=\"verificaEnter($event)\"/>\n"
                 + "    </div>\n"
                 + "    <div class=\"col-sm-3\" >\n"
                 + "        <button type=\"button\" class=\"btn btn-info\" (click)=\"pesquisar()\">\n"
@@ -538,6 +548,85 @@ public class GeraFront extends AbstractMojo {
         File f = new File(project.getFile().getParent() + "/target/classes/");
         toReturn.addAll(scanFolder(f, f));
         return toReturn;
+    }
+
+    private List<String> chapa(Class c) {
+        i = 0;
+        return chapa(c, "");
+    }
+
+    private List<String> chapa(Class c, String prefixo) {
+        List<String> toReturn = new ArrayList<>();
+        List<Field> atributos = Util.getTodosAtributosNaoBase(c);
+        atributos.forEach((a) -> {
+            String nome = a.getName();
+            String nomeTipo = a.getType().getCanonicalName();
+            //System.out.println(nome + ":" + nomeTipo);
+
+            if (nomeTipo.startsWith("java.lang") || nomeTipo.startsWith("java.time")) {
+                toReturn.add(resolve(prefixo, a));
+            }
+            if (a.isAnnotationPresent(ManyToOne.class) || a.isAnnotationPresent(OneToOne.class)) {
+                toReturn.addAll(chapa(a.getType(), prefixo + nome + "."));
+            }
+
+        });
+
+        return toReturn;
+    }
+
+    private int i;
+
+    private String resolve(String prefixo, Field atributo) {
+        List<String> ignorados = Arrays.asList(new String[]{"descricao", "nome", "valor"});
+        String name = atributo.getName();
+        String label = primeiraMaiuscula(splitCamelCase(name));
+        String nomeCompleto = prefixo + name;
+        String pedacos[] = nomeCompleto.split("\\.");
+        int length = pedacos.length;
+        if (length > 1 && ignorados.contains(pedacos[length - 1])) {
+            label = primeiraMaiuscula(splitCamelCase(pedacos[length - 2]));
+        }
+        List<String> collect = Arrays.asList(pedacos).stream().map(s -> ('"' + s + '"')).collect(Collectors.toList());
+
+        return "{ active:" + (i++ < 4) + ", comparisonOperator: \"" + comparador(atributo.getType()) + "\", field: \"" + nomeCompleto + "\", label: \"" + label + "\",pedacos: " + collect + "},";
+    }
+
+    private String splitCamelCase(String s) { //by polygenelubricants https://stackoverflow.com/users/276101/polygenelubricants
+        return s.replaceAll(
+                String.format("%s|%s|%s",
+                        "(?<=[A-Z])(?=[A-Z][a-z])",
+                        "(?<=[^A-Z])(?=[A-Z])",
+                        "(?<=[A-Za-z])(?=[^A-Za-z])"
+                ),
+                " "
+        );
+    }
+
+    private String comparador(Class<?> type) {
+        if (type.equals(String.class)) {
+            return "STARTS_WITH";
+        }
+        return "EQUAL";
+    }
+
+    private FileWriter abreArquivo(String arquivo, boolean b) throws IOException {
+        if (new File(arquivo).exists()) {
+            BufferedReader brTest = new BufferedReader(new FileReader(arquivo));
+            String firstLine = brTest.readLine();
+            if (firstLine == null) {
+//                System.out.println("--->" + arquivo + " NULL");
+            } else if (firstLine.contains("VICIGNORE")) {
+                String ignorados = System.getProperty("user.home") + "/VICIGNORE/";
+                new File(ignorados).mkdir();
+                String at = arquivo.substring(arquivo.indexOf("src")).replaceAll("/", "__");
+                System.out.println("-i->" + arquivo + " " + at + " " + ignorados);
+                return new FileWriter(new File(ignorados, at), false);
+            }
+            brTest.close();
+        }
+
+        return new FileWriter(arquivo, b);
     }
 
 }
