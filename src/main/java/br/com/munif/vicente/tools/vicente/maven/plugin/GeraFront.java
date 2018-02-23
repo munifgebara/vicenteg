@@ -57,7 +57,7 @@ public class GeraFront extends AbstractMojo {
                 List<Class> onlyEntities = scanClasses();
                 for (Class c : onlyEntities) {
                     geraFront(c.getCanonicalName());
-                    //System.out.println("mvn br.com.munif.vicente:g:0.0.1-SNAPSHOT:front -Dentidade=" + c.getCanonicalName());
+                    System.out.println("mvn br.com.munif.vicente:g:0.0.1-SNAPSHOT:front -Dentidade=" + c.getCanonicalName());
                 }
 
             } else {
@@ -137,6 +137,7 @@ public class GeraFront extends AbstractMojo {
                 + "import { ListaComponent } from './lista/lista.component';\n"
                 + "import { DetalhesComponent } from './detalhes/detalhes.component';\n"
                 + "\n"
+                + "/*IMPORTS*/\n"
                 + "\n"
                 + "@NgModule({\n"
                 + "  imports: [\n"
@@ -145,7 +146,13 @@ public class GeraFront extends AbstractMojo {
                 + "    " + ne + "RoutingModule,\n"
                 + "    VicComponentsModule\n"
                 + "  ],\n"
-                + "  declarations: [CrudComponent, ListaComponent, DetalhesComponent]\n"
+                + "  declarations: [\n"
+                        + "/*DECLARATIONS*/\n"
+                        + "      CrudComponent, \n"
+                        + "      ListaComponent, \n"
+                        + "      DetalhesComponent\n,"
+                        
+                        + "]\n"
                 + "})\n"
                 + "export class " + ne + "Module { }\n"
                 + ""
@@ -185,8 +192,7 @@ public class GeraFront extends AbstractMojo {
                 + "import { Routes, RouterModule } from '@angular/router';\n"
                 + "import { CrudComponent } from './crud/crud.component';\n"
                 + "import { ListaComponent } from './lista/lista.component';\n"
-                + "import { DetalhesComponent } from './detalhes/detalhes.component';\n"
-                + "\n"
+                + "import { DetalhesComponent } from './detalhes/detalhes.component';\n\n\n"
                 + "const routes: Routes = [\n"
                 + "  {\n"
                 + "    path: '" + minusculas + "', component: CrudComponent,\n"
@@ -254,7 +260,7 @@ public class GeraFront extends AbstractMojo {
     }
 
     private void geraDetalhesTS(String pastaModulo, String nce, String npb, String ne) throws IOException, ClassNotFoundException {
-        Set<Class> jaImportou = new HashSet<>();
+
         Class classe = classLoader.loadClass(nce);
 
         List<Field> atributos = Util.getTodosAtributosNaoBase(classe);
@@ -269,6 +275,8 @@ public class GeraFront extends AbstractMojo {
                 + "import { Router, ActivatedRoute, Params } from '@angular/router';\n"
                 + "import { Location } from '@angular/common';\n"
                 + "import { " + ne + "Service } from '../" + ne.toLowerCase() + ".service';\n");
+        Set<Class> jaImportou = new HashSet<>();
+        jaImportou.add(classe);
         for (Field f : atributos) {
             if (f.isAnnotationPresent(ManyToOne.class)) {
                 if (!jaImportou.contains(f.getType())) {
@@ -356,7 +364,7 @@ public class GeraFront extends AbstractMojo {
                 + "    <div class=\"row\">\n\n");
 
         for (Field atributo : atributos) {
-            geraCampoAtributo(fw, atributo);
+            geraCampoAtributo(fw, atributo, pastaModulo);
         }
         fw.write(""
                 + "</div>\n"
@@ -382,16 +390,16 @@ public class GeraFront extends AbstractMojo {
                 + "    </div>\n"
                 + "  \n"
                 + "\n"
-                + "</div>"
+                + "</div>\n"
         );
         fw.close();
     }
 
-    public void geraCampoAtributo(FileWriter fw, Field atributo) throws IOException {
+    public void geraCampoAtributo(FileWriter fw, Field atributo, String pastaModulo) throws IOException {
         Class tipo = atributo.getType();
         if (atributo.isAnnotationPresent(OneToOne.class)) {
-            fw.write("<!--OneToOne-->"
-                    + "");
+            fw.write("<!--OneToOne-->\n"
+                    + "\n");
 
         } else if (atributo.isAnnotationPresent(ManyToMany.class)) {
             tipo = Util.getTipoGenerico(atributo);
@@ -399,21 +407,25 @@ public class GeraFront extends AbstractMojo {
                     + "  <div class=\"col-sm-12 margin-bottom\">\n"
                     + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
                     + "      <vic-many-to-many [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" ></vic-many-to-many>\n"
-                    + "  </div>"
-                    + "");
+                    + "  </div>\n"
+                    + "\n");
 
         } else if (atributo.isAnnotationPresent(OneToMany.class)) {
             tipo = Util.getTipoGenerico(atributo);
-            fw.write("<!--OneToMany-->"
+            String nomeArquivo = atributo.getDeclaringClass().getSimpleName().toLowerCase() + "-" + atributo.getName().toLowerCase();
+            fw.write(""
+                    + "  <app-" + nomeArquivo + " [itens]=\"selecionado." + atributo.getName() + "\" [proprietario]=\"selecionado\"></app-" + nomeArquivo + ">\n\n"
                     + "");
+            geraComponenteOneToMany(atributo, pastaModulo);
+            geraHTMLOneToMany(atributo, pastaModulo);
 
         } else if (atributo.isAnnotationPresent(ManyToOne.class)) {
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\">\n"
                     + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
                     + "      <vic-many-to-one [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" ></vic-many-to-one>\n"
-                    + "  </div>"
-                    + "");
+                    + "  </div>\n"
+                    + "\n");
 
         } else if (atributo.getType().equals(ZonedDateTime.class)) {
             fw.write(""
@@ -421,13 +433,14 @@ public class GeraFront extends AbstractMojo {
                     + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
                     + "      <input [owlDateTime]=\"dt1\" [owlDateTimeTrigger]=\"dt1\" type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" />\n"
                     + "      <owl-date-time #dt1></owl-date-time>\n"
-                    + "  </div>"
-                    + "");
+                    + "  </div>\n"
+                    + "\n");
         } else {
             fw.write("  <div class=\"col-sm-12 margin-bottom\">\n"
                     + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
                     + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" class=\"form-control\" />\n"
-                    + "  </div>\n");
+                    + "  </div>\n"
+                    + "\n");
         }
     }
 
@@ -561,8 +574,6 @@ public class GeraFront extends AbstractMojo {
         atributos.forEach((a) -> {
             String nome = a.getName();
             String nomeTipo = a.getType().getCanonicalName();
-            //System.out.println(nome + ":" + nomeTipo);
-
             if (nomeTipo.startsWith("java.lang") || nomeTipo.startsWith("java.time")) {
                 toReturn.add(resolve(prefixo, a));
             }
@@ -589,7 +600,7 @@ public class GeraFront extends AbstractMojo {
         }
         List<String> collect = Arrays.asList(pedacos).stream().map(s -> ('"' + s + '"')).collect(Collectors.toList());
 
-        return "{ active:" + (i++ < 4) + ", comparisonOperator: \"" + comparador(atributo.getType()) + "\", field: \"" + nomeCompleto + "\", label: \"" + label + "\",pedacos: " + collect + "},";
+        return "{ active: " + (i++ < 4) + ", comparisonOperator: \"" + comparador(atributo.getType()) + "\", field: \"" + nomeCompleto + "\", label: \"" + label + "\",pedacos: " + collect + "},";
     }
 
     private String splitCamelCase(String s) { //by polygenelubricants https://stackoverflow.com/users/276101/polygenelubricants
@@ -627,6 +638,219 @@ public class GeraFront extends AbstractMojo {
         }
 
         return new FileWriter(arquivo, b);
+    }
+
+    private void geraComponenteOneToMany(Field atributo, String pastaModulo) throws IOException {
+        Class classe = Util.getTipoGenerico(atributo);
+        List<Field> atributos = Util.getTodosAtributosNaoBase(classe);
+        String nomeArquivo = atributo.getDeclaringClass().getSimpleName().toLowerCase() + "-" + atributo.getName().toLowerCase();
+        String nomeClasseCoponente = atributo.getDeclaringClass().getSimpleName() + Util.primeiraMaiuscula(atributo.getName());
+        String arquivo = pastaModulo + "/detalhes/" + nomeArquivo + ".component.ts";
+        String atributoMappedBy = "NAO_TEM";
+        OneToMany oneToMany = atributo.getAnnotation(OneToMany.class);
+        if (oneToMany != null && oneToMany.mappedBy() != null && (!oneToMany.mappedBy().trim().isEmpty())) {
+            atributoMappedBy = oneToMany.mappedBy();
+        }
+        FileWriter fw = abreArquivo(arquivo, false);
+
+        fw.write("//Munif\n"
+                + "import { Component, OnInit, Input } from '@angular/core';\n"
+                + "import { VicReturn } from '../../comum/vic-return';\n"
+                + "import { BaseEntity } from '../../comum/base-entity';\n"
+                + "import { " + classe.getSimpleName() + "Service } from '../../" + classe.getSimpleName().toLowerCase() + "/" + classe.getSimpleName().toLowerCase() + ".service';\n"
+        );
+        Set<Class> jaImportou = new HashSet<>();
+        jaImportou.add(classe);
+        for (Field f : atributos) {
+            if (f.getName().equals(atributoMappedBy)) {
+                continue;
+            }
+            if (f.isAnnotationPresent(ManyToOne.class)) {
+                if (!jaImportou.contains(f.getType())) {
+                    fw.write("import { " + f.getType().getSimpleName() + "Service } from '../../" + f.getType().getSimpleName().toLowerCase() + "/" + f.getType().getSimpleName().toLowerCase() + ".service';\n");
+                    jaImportou.add(f.getType());
+                }
+            }
+        }
+        for (Field f : atributos) {
+            if (f.getName().equals(atributoMappedBy)) {
+                continue;
+            }
+            if (f.isAnnotationPresent(ManyToMany.class)) {
+                Class tipo = Util.getTipoGenerico(f);
+                if (!jaImportou.contains(tipo)) {
+                    fw.write("import { " + tipo.getSimpleName() + "Service } from '../../" + tipo.getSimpleName().toLowerCase() + "/" + tipo.getSimpleName().toLowerCase() + ".service';\n");
+                    jaImportou.add(tipo);
+                }
+            }
+        }
+        System.out.print("--->");
+
+        jaImportou.forEach(a -> System.out.print(a.getSimpleName() + " "));
+        System.out.println("");
+        fw.write(""
+                + "\n"
+                + "\n"
+                + "@Component({\n"
+                + "    selector: 'app-" + nomeArquivo + "',\n"
+                + "    templateUrl: './" + nomeArquivo + ".component.html',\n"
+                + "    styleUrls: ['./detalhes.component.css']\n"
+                + "})\n"
+                + "export class " + nomeClasseCoponente + "Component implements OnInit {\n"
+                + "\n"
+                + "    editando: boolean;\n"
+                + "    selecionado: BaseEntity;\n"
+                + "    erro;\n"
+                + "\n"
+                + "    colunas = [\n");
+        for (String s : chapa(classe)) {
+            if (!s.contains("field: \"" + atributoMappedBy + ".")) {
+                fw.write("    " + s + "\n");
+            }
+        }
+        fw.write(""
+                + "    ];\n"
+                + "\n"
+                + "\n"
+                + "\n"
+                + "    @Input() itens: BaseEntity[];\n"
+                + "    @Input() proprietario: BaseEntity;\n"
+                + "    lista: VicReturn;\n"
+                + "\n"
+                + "    constructor(");
+        String separador = "";
+        for (Class tipo : jaImportou) {
+            fw.write(separador + "protected " + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service:" + tipo.getSimpleName() + "Service");
+            separador = ",";
+        }
+        String mClasse = Util.primeiraMinuscula(classe.getSimpleName());
+        fw.write(""
+                + ") {\n"
+                + "\n"
+                + "    }\n"
+                + "\n"
+                + "    ngOnInit() {\n"
+                + "    }\n"
+                + "    edita(evento) {\n"
+                + "        this." + mClasse + "Service.getOne(evento).then(obj => {\n"
+                + "            this.editando = true;\n"
+                + "            this.selecionado = obj;\n"
+                + "            this.selecionado['" + atributoMappedBy + "'] = { id: this.proprietario.id, version: this.proprietario.version };\n"
+                + "        })\n"
+                + "    }\n"
+                + "\n"
+                + "    criaVicReturnItens() {\n"
+                + "        if (!this.lista) {\n"
+                + "            this.lista = new VicReturn(this.itens);\n"
+                + "        }\n"
+                + "        return this.lista;\n"
+                + "\n"
+                + "    }\n"
+                + "    salvar() {\n"
+                + "        this." + mClasse + "Service.update(this.selecionado)\n"
+                + "            .then(salvo => {\n"
+                + "                this.selecionado = salvo;\n"
+                + "                this.atualiza();\n"
+                + "                this.editando = false;\n"
+                + "            })\n"
+                + "            .catch(erro => {\n"
+                + "                console.log('salvar " + mClasse + "', erro);\n"
+                + "                this.erro = erro;\n"
+                + "            });\n"
+                + "    }\n"
+                + "    cancelar() {\n"
+                + "        this.atualiza();\n"
+                + "        this.editando = false;\n"
+                + "    }\n"
+                + "    excluir() {\n"
+                + "        this." + mClasse + "Service.remove(this.selecionado.id)\n"
+                + "            .then(obj => {\n"
+                + "                this.selecionado = obj;\n"
+                + "                this.atualiza();\n"
+                + "                this.editando = false;\n"
+                + "\n"
+                + "            })\n"
+                + "            .catch(erro => {\n"
+                + "                console.log('excluir " + mClasse + "', erro);\n"
+                + "                this.erro = { message: \"Impossível Excluir\", description: \"Este registro está sendo usado\" };\n"
+                + "            });\n"
+                + "    }\n"
+                + "    atualiza() {\n"
+                + "        this." + mClasse + "Service\n"
+                + "            .vquery({\n"
+                + "                orderBy: 'id',\n"
+                + "                query: {\n"
+                + "                    logicalOperator: \"OR\",\n"
+                + "                    subQuerys: [\n"
+                + "                        {\n"
+                + "                            criteria: {\n"
+                + "                                comparisonOperator: \"EQUAL\",\n"
+                + "                                field: \"" + atributoMappedBy + ".id\", value: this.proprietario.id\n"
+                + "                            }\n"
+                + "                        }\n"
+                + "                    ]\n"
+                + "                }\n"
+                + "            }).then(vr => {\n"
+                + "                this.lista = vr;\n"
+                + "                this.itens = vr.values;\n"
+                + "            });\n"
+                + "    }\n"
+                + "\n"
+                + "}\n"
+                + "");
+        fw.close();
+        String arquivoModule = pastaModulo + "/" + atributo.getDeclaringClass().getSimpleName().toLowerCase() + ".module.ts";
+        Util.adicionaLinha(arquivoModule, "/*IMPORTS*/", "import { "+nomeClasseCoponente+"Component } from './detalhes/"+nomeArquivo+".component';");
+        
+        Util.adicionaLinha(arquivoModule, "/*DECLARATIONS*/", "      "+nomeClasseCoponente+"Component,");
+
+    }
+
+    private void geraHTMLOneToMany(Field atributo, String pastaModulo) throws IOException {
+        Class tipo = Util.getTipoGenerico(atributo);
+        String nomeArquivo = atributo.getDeclaringClass().getSimpleName().toLowerCase() + "-" + atributo.getName().toLowerCase();
+        String arquivo = pastaModulo + "/detalhes/" + nomeArquivo + ".component.html";
+        String atributoMappedBy = "NAO_TEM";
+        OneToMany oneToMany = atributo.getAnnotation(OneToMany.class);
+        if (oneToMany != null && oneToMany.mappedBy() != null && (!oneToMany.mappedBy().trim().isEmpty())) {
+            atributoMappedBy = oneToMany.mappedBy();
+        }
+
+        FileWriter fw = abreArquivo(arquivo, false);
+        fw.write(""
+                + "<div class=\"container\" *ngIf=\"!editando\">\n"
+                + "    <h2>" + atributo.getName().toUpperCase() + " {{itens.length}}\n"
+                + "        <button type=\"button\" class=\"btn btn-success\" (click)=\"edita('new')\">\n"
+                + "            <i class=\"far fa-file\"></i> Novo</button>\n"
+                + "    </h2>\n"
+                + "    <vic-tabela [dados]=\"criaVicReturnItens()\" [colunas]=\"colunas\" (acao)=\"edita($event)\"></vic-tabela>\n"
+                + "</div>\n"
+                + "\n"
+                + "<div class=\"container\" *ngIf=\"editando\">\n"
+                + "    <h2>" + atributo.getName().toUpperCase() + "</h2>\n"
+                + "    <div class=\"row\">\n");
+        for (Field a : Util.getTodosAtributosNaoBase(tipo)) {
+            if (!a.getName().equals(atributoMappedBy)) {
+                geraCampoAtributo(fw, a, pastaModulo);
+            }
+        }
+        fw.write(""
+                + "    </div>\n"
+                + "    <div class=\"row\">\n"
+                + "        <div class=\"col-sm-12 text-right\">\n"
+                + "            <button type=\"button\" class=\"btn btn-warning\" (click)=\"cancelar()\">\n"
+                + "                <i class=\"far fa-times-circle\"></i> Cancelar</button>\n"
+                + "            <button type=\"button\" class=\"btn btn-success\" (click)=\"salvar()\">\n"
+                + "                <i class=\"far fa-save\"></i> Salvar</button>\n"
+                + "            <button type=\"button\" class=\"btn btn-danger\" (click)=\"excluir()\">\n"
+                + "                <i class=\"far fa-delete\"></i>Excluir</button>\n"
+                + "        </div>\n"
+                + "    </div>\n"
+                + "</div>\n"
+                + "\n");
+
+        fw.close();
+
     }
 
 }
