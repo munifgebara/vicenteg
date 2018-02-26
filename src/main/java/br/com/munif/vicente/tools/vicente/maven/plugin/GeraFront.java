@@ -12,6 +12,7 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -57,7 +58,7 @@ public class GeraFront extends AbstractMojo {
                 List<Class> onlyEntities = scanClasses();
                 for (Class c : onlyEntities) {
                     geraFront(c.getCanonicalName());
-                    System.out.println("mvn br.com.munif.vicente:g:0.0.1-SNAPSHOT:front -Dentidade=" + c.getCanonicalName());
+                    //System.out.println("mvn br.com.munif.vicente:g:0.0.1-SNAPSHOT:front -Dentidade=" + c.getCanonicalName());
                 }
 
             } else {
@@ -167,7 +168,7 @@ public class GeraFront extends AbstractMojo {
         fw.write(""
                 + "import { Injectable } from '@angular/core';\n"
                 + "import { Http, Headers, Response } from '@angular/http';\n"
-                + "import { SuperService} from '../comum/super-service';\n"
+                + "import { SuperService} from '../vic-components/comum/super-service';\n"
                 + "\n"
                 + "@Injectable()\n"
                 + "export class " + ne + "Service extends SuperService{\n"
@@ -296,8 +297,8 @@ public class GeraFront extends AbstractMojo {
         }
 
         fw.write(""
-                + "import { VicReturn } from '../../comum/vic-return';\n"
-                + "import { SuperDetalhesComponent } from '../../comum/super-detalhes';\n"
+                + "import { VicReturn } from '../../vic-components/comum/vic-return';\n"
+                + "import { SuperDetalhesComponent } from '../../vic-components/comum/super-detalhes';\n"
                 + "\n"
                 + "\n"
                 + "@Component({\n"
@@ -365,27 +366,51 @@ public class GeraFront extends AbstractMojo {
         for (Field atributo : atributos) {
             geraCampoAtributo(fw, atributo, pastaModulo);
         }
+
         fw.write(""
-                + "</div>\n"
-                + ""
+                + "    </div>\n"
                 + "    <div class=\"row\">\n"
-                + "\n"
-                + "      <div class=\"col-sm-12 text-right\">\n"
+                + "      <div class=\"col-sm-6 text-left\">\n"
+                + "        <button type=\"button\" class=\"btn btn-danger\" (click)=\"excluir()\" *ngIf=\"selecionado.version !== null\">\n"
+                + "          <i class=\"far fa-trash-alt\"></i> Excluir\n"
+                + "        </button>\n"
+                + "      </div>\n"
+                + "      <div class=\"col-sm-6 text-right\">\n"
                 + "        <button type=\"button\" class=\"btn btn-warning\" (click)=\"cancelar()\">\n"
-                + "          <i class=\"far fa-times-circle\"></i> Cancelar</button>\n"
+                + "          <i class=\"far fa-times-circle\"></i> Cancelar\n"
+                + "        </button>\n"
                 + "        <button type=\"button\" class=\"btn btn-success\" (click)=\"salvar()\">\n"
-                + "          <i class=\"far fa-save\"></i> Salvar</button>\n"
-                + "        <button type=\"button\" class=\"btn btn-danger\" (click)=\"excluir()\">\n"
-                + "          <i class=\"far fa-delete\"></i>Excluir</button>\n"
+                + "          <i class=\"far fa-save\"></i> Salvar\n"
+                + "        </button>\n"
                 + "      </div>\n"
                 + "    </div>\n"
-                + ""
-                + ""
-                + "  <div class=\"alert alert-danger\" role=\"alert\" *ngIf=\"erro\">\n"
-                + "    {{erro|json}}\n"
-                + "  </div>\n"
-                + "</div>\n"
-        );
+                + "    <div class=\"alert alert-danger\" role=\"alert\" *ngIf=\"erro\">\n"
+                + "      {{erro|json}}\n"
+                + "    </div>\n"
+                + "  </div>\n\n"
+                + "");
+
+//        fw.write(""
+//                + "</div>\n"
+//                + ""
+//                + "    <div class=\"row\">\n"
+//                + "\n"
+//                + "      <div class=\"col-sm-12 text-right\">\n"
+//                + "        <button type=\"button\" class=\"btn btn-warning\" (click)=\"cancelar()\">\n"
+//                + "          <i class=\"far fa-times-circle\"></i> Cancelar</button>\n"
+//                + "        <button type=\"button\" class=\"btn btn-success\" (click)=\"salvar()\">\n"
+//                + "          <i class=\"far fa-save\"></i> Salvar</button>\n"
+//                + "        <button type=\"button\" class=\"btn btn-danger\" (click)=\"excluir()\">\n"
+//                + "          <i class=\"far fa-delete\"></i>Excluir</button>\n"
+//                + "      </div>\n"
+//                + "    </div>\n"
+//                + ""
+//                + ""
+//                + "  <div class=\"alert alert-danger\" role=\"alert\" *ngIf=\"erro\">\n"
+//                + "    {{erro|json}}\n"
+//                + "  </div>\n"
+//                + "</div>\n"
+//        );
         fw.close();
     }
 
@@ -453,9 +478,9 @@ public class GeraFront extends AbstractMojo {
                 + "import { Component, OnInit } from '@angular/core';\n"
                 + "import { Router, ActivatedRoute, Params } from '@angular/router';\n"
                 + "import { " + ne + "Service } from '../" + minusculas + ".service';\n"
-                + "import { BaseEntity } from \"../../comum/base-entity\";\n"
-                + "import { VicReturn } from '../../comum/vic-return';\n"
-                + "import { SuperListaComponent } from '../../comum/super-lista';\n"
+                + "import { BaseEntity } from \"../../vic-components/comum/base-entity\";\n"
+                + "import { VicReturn } from '../../vic-components/comum/vic-return';\n"
+                + "import { SuperListaComponent } from '../../vic-components/comum/super-lista';\n"
                 + "\n"
                 + "\n"
                 + "@Component({\n"
@@ -574,7 +599,11 @@ public class GeraFront extends AbstractMojo {
                 toReturn.add(resolve(prefixo, a));
             }
             if (a.isAnnotationPresent(ManyToOne.class) || a.isAnnotationPresent(OneToOne.class)) {
-                toReturn.addAll(chapa(a.getType(), prefixo + nome + "."));
+                if (prefixo.endsWith(nome + ".")) {
+                    System.out.println("----> Possivel recursao na classe  " + c.getSimpleName() + " atributo " + nome + " prefixo " + prefixo);
+                } else {
+                    toReturn.addAll(chapa(a.getType(), prefixo + nome + "."));
+                }
             }
 
         });
@@ -651,8 +680,8 @@ public class GeraFront extends AbstractMojo {
 
         fw.write("//Munif\n"
                 + "import { Component, OnInit, Input } from '@angular/core';\n"
-                + "import { VicReturn } from '../../comum/vic-return';\n"
-                + "import { BaseEntity } from '../../comum/base-entity';\n"
+                + "import { VicReturn } from '../../vic-components/comum/vic-return';\n"
+                + "import { BaseEntity } from '../../vic-components/comum/base-entity';\n"
                 + "import { " + classe.getSimpleName() + "Service } from '../../" + classe.getSimpleName().toLowerCase() + "/" + classe.getSimpleName().toLowerCase() + ".service';\n"
         );
         Set<Class> jaImportou = new HashSet<>();
