@@ -34,6 +34,7 @@ public class Util {
     public final static String IDENTACAO20 = "                    ";
     public final static String IDENTACAO24 = "                        ";
     public final static SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+    public final static SimpleDateFormat fsdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 
     public static String primeiraMaiuscula(String s) {
         return s.substring(0, 1).toUpperCase().concat(s.substring(1));
@@ -72,7 +73,7 @@ public class Util {
         if (aRemoverVersion != null) {
             todosAtributos.remove(aRemoverVersion);
         }
-        if (aRemoverGumgaCustomFields!=null){
+        if (aRemoverGumgaCustomFields != null) {
             todosAtributos.remove(aRemoverGumgaCustomFields);
             todosAtributos.add(aRemoverGumgaCustomFields);
             System.out.println(todosAtributos);
@@ -106,7 +107,7 @@ public class Util {
     public static List<Field> getTodosAtributosNaoBase(Class classe) throws SecurityException {
         List<Field> aRetornar = new ArrayList<Field>();
         List<Field> aRemover = new ArrayList<Field>();
-        if (!classe.getSuperclass().equals(BaseEntity.class)&&!classe.getSuperclass().equals(VicTenancyFieldsBaseEntity.class)) {
+        if (!classe.getSuperclass().equals(BaseEntity.class) && !classe.getSuperclass().equals(VicTenancyFieldsBaseEntity.class)) {
             aRetornar.addAll(getTodosAtributosNaoBase(classe.getSuperclass()));
         }
         aRetornar.addAll(Arrays.asList(classe.getDeclaredFields()));
@@ -118,7 +119,6 @@ public class Util {
         aRetornar.removeAll(aRemover);
         return aRetornar;
     }
-
 
     public static ClassLoader getClassLoader(MavenProject project) {
         ClassLoader aRetornar = null;
@@ -157,7 +157,6 @@ public class Util {
         }
         return tipoGenerico;
     }
-
 
     public static String etiqueta(Field atributo) {
         return primeiraMaiuscula(atributo.getName());
@@ -213,16 +212,62 @@ public class Util {
                 + "\n");
     }
 
-    public static String dependenciasSeparadasPorVirgula(Set<Class> dependencias,String sufixo,boolean apostrofe) {
+    public static String dependenciasSeparadasPorVirgula(Set<Class> dependencias, String sufixo, boolean apostrofe) {
         StringBuilder sb = new StringBuilder();
-        for (Class clazz:dependencias) {
-            sb.append(", "+(apostrofe?"'":"")+clazz.getSimpleName()+sufixo+(apostrofe?"'":"") );
+        for (Class clazz : dependencias) {
+            sb.append(", " + (apostrofe ? "'" : "") + clazz.getSimpleName() + sufixo + (apostrofe ? "'" : ""));
         }
         return sb.toString();
     }
 
     static Class getClassLoader(String nce) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public static FileWriter abreArquivo(String arquivo, boolean b) throws IOException {
+        if (new File(arquivo).exists()) {
+            BufferedReader brTest = new BufferedReader(new FileReader(arquivo));
+            String firstLine = brTest.readLine();
+            if (firstLine == null) {
+//                System.out.println("--->" + arquivo + " NULL");
+            } else if (firstLine.contains("VICIGNORE")) {
+                String ignorados = System.getProperty("user.home") + "/VICIGNORE/";
+                new File(ignorados).mkdir();
+                String at = fsdf.format(new Date()) + "_" + arquivo.substring(arquivo.indexOf("src")).replaceAll("/", "__");
+                System.out.println("-i->" + arquivo + " " + at + " " + ignorados);
+                return new FileWriter(new File(ignorados, at), false);
+            }
+            brTest.close();
+        }
+
+        FileWriter fileWriter = new FileWriter(arquivo, b);
+        //VICIGNORE
+        String extensao = arquivo.substring(arquivo.lastIndexOf(".") + 1);
+        String comentario = null;
+        switch (extensao) {
+            case "java":
+                comentario = "/* %s */\n";
+                break;
+            case "ts":
+                comentario = "/* %s */\n";
+                break;
+            case "html":
+                comentario = "<!-- %s -->\n";
+                break;
+            case "css":
+                comentario = "/* %s */\n";
+                break;
+
+            default:
+                System.out.println("----> Nao sei comentar " + extensao);
+        }
+        if (comentario != null) {
+            fileWriter.write(String.format(comentario, "Arquivo gerado utilizando VICGERADOR por " + System.getProperty("user.name") + " as " + sdf.format(new Date())));
+            fileWriter.write(String.format(comentario, "Para não gerar o arquivo novamente coloque na primeira linha um comentário com  VICIGNORE , pode ser essa mesmo"));
+        }
+
+        return fileWriter;
+
     }
 
 }

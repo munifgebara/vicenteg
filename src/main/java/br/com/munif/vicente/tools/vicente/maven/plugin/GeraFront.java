@@ -1,6 +1,7 @@
 package br.com.munif.vicente.tools.vicente.maven.plugin;
 
 import br.com.munif.framework.vicente.core.Utils;
+import static br.com.munif.vicente.tools.vicente.maven.plugin.Util.abreArquivo;
 import static br.com.munif.vicente.tools.vicente.maven.plugin.Util.primeiraMaiuscula;
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,6 +14,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -644,25 +646,6 @@ public class GeraFront extends AbstractMojo {
             return "STARTS_WITH";
         }
         return "EQUAL";
-    }
-
-    private FileWriter abreArquivo(String arquivo, boolean b) throws IOException {
-        if (new File(arquivo).exists()) {
-            BufferedReader brTest = new BufferedReader(new FileReader(arquivo));
-            String firstLine = brTest.readLine();
-            if (firstLine == null) {
-//                System.out.println("--->" + arquivo + " NULL");
-            } else if (firstLine.contains("VICIGNORE")) {
-                String ignorados = System.getProperty("user.home") + "/VICIGNORE/";
-                new File(ignorados).mkdir();
-                String at = arquivo.substring(arquivo.indexOf("src")).replaceAll("/", "__");
-                System.out.println("-i->" + arquivo + " " + at + " " + ignorados);
-                return new FileWriter(new File(ignorados, at), false);
-            }
-            brTest.close();
-        }
-
-        return new FileWriter(arquivo, b);
     }
 
     private void geraComponenteOneToMany(Field atributo, String pastaModulo) throws IOException {

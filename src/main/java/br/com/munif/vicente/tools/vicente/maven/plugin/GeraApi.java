@@ -19,6 +19,8 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
+import static br.com.munif.vicente.tools.vicente.maven.plugin.Util.abreArquivo;
+
 /**
  *
  * @author munif
@@ -65,9 +67,8 @@ public class GeraApi extends AbstractMojo {
     }
 
     private void geraRepository(String nce, String npb, String ne) throws IOException {
-        FileWriter fw = null;
-        String arquivoRepository = Util.windowsSafe(project.getFile().getParent() + "/src/main/java/" + (npb.replaceAll("\\.", "/")) + "/repository/" + ne + "Repository.java");
-        fw = new FileWriter(arquivoRepository, false);
+        String arquivo = Util.windowsSafe(project.getFile().getParent() + "/src/main/java/" + (npb.replaceAll("\\.", "/")) + "/repository/" + ne + "Repository.java");
+        FileWriter fw = abreArquivo(arquivo, false);
         fw.write(""
                 + "package " + npb + ".repository;\n"
                 + "\n"
@@ -91,9 +92,9 @@ public class GeraApi extends AbstractMojo {
     }
 
     private void geraService(String nce, String npb, String ne) throws IOException {
-        FileWriter fw = null;
-        String arquivoRepository = Util.windowsSafe(project.getFile().getParent() + "/src/main/java/" + (npb.replaceAll("\\.", "/")) + "/service/" + ne + "Service.java");
-        fw = new FileWriter(arquivoRepository, false);
+        String arquivo = Util.windowsSafe(project.getFile().getParent() + "/src/main/java/" + (npb.replaceAll("\\.", "/")) + "/service/" + ne + "Service.java");
+        FileWriter fw = abreArquivo(arquivo, false);
+        
         fw.write(""
                 + "package " + npb + ".service;\n"
                 + "\n"
@@ -120,9 +121,8 @@ public class GeraApi extends AbstractMojo {
     }
 
     private void geraAPI(String nce, String npb, String ne) throws IOException {
-        FileWriter fw = null;
-        String arquivoRepository = Util.windowsSafe(project.getFile().getParent() + "/src/main/java/" + (npb.replaceAll("\\.", "/")) + "/api/" + ne + "Api.java");
-        fw = new FileWriter(arquivoRepository, false);
+        String arquivo = Util.windowsSafe(project.getFile().getParent() + "/src/main/java/" + (npb.replaceAll("\\.", "/")) + "/api/" + ne + "Api.java");
+        FileWriter fw = abreArquivo(arquivo, false);
         fw.write(""
                 + "package " + npb + ".api;\n"
                 + "\n"
