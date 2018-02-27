@@ -95,13 +95,8 @@ public class GeraFront extends AbstractMojo {
         geraListaCSS(pastaModulo, nce, nomePacoteBase, nomeEntidade);
         geraListaHTML(pastaModulo, nce, nomePacoteBase, nomeEntidade);
         if (!jaExiste) {
-            Util.adicionaLinha(Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/app.component.html"), "<!-- MENU -->", ""
-                    + "                    <li class=\"nav-item\">\n"
-                    + "                        <a class=\"nav-link\" [routerLink]=\"['./" + nomeEntidade.toLowerCase() + "']\">\n"
-                    + "                            <span data-feather=\"file\"></span>\n"
-                    + "                            " + nomeEntidade + "\n"
-                    + "                        </a>\n"
-                    + "                    </li>"
+            Util.adicionaLinha(Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/app.component.ts"), "/* MENU  */", ""
+                    + "{ link: './" + nomeEntidade.toLowerCase() + "', iconeTipo: 'fas', icone: 'fa-home', label: '" + nomeEntidade + "', active: false },\n"
                     + "");
             Util.adicionaLinha(Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/app.module.ts"), "app.module.ts1", ""
                     + "import { " + nomeEntidade + "Module} from './" + nomeEntidade.toLowerCase() + "/" + nomeEntidade.toLowerCase() + ".module';\n"
@@ -436,9 +431,18 @@ public class GeraFront extends AbstractMojo {
             String nomeArquivo = atributo.getDeclaringClass().getSimpleName().toLowerCase() + "-" + atributo.getName().toLowerCase();
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"selecionado.version!==null \">\n"
-                    + "    <app-" + nomeArquivo + " [itens]=\"(selecionado." + atributo.getName() + "===null?[]:selecionado." + atributo.getName() + ")\" [proprietario]=\"selecionado\"></app-" + nomeArquivo + ">\n\n"
-                    + "  </div>\n"
+                    + "    <app-" + nomeArquivo + " [itens]=\"(selecionado." + atributo.getName() + "===null?[]:selecionado." + atributo.getName() + ")\" [proprietario]=\"selecionado\"></app-" + nomeArquivo + ">\n"
+                    + "  </div>\n\n"
                     + "");
+            fw.write(""
+                    + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"selecionado.version==null \">\n"
+                    + "        <h2>"+atributo.getName().toUpperCase()+"</h2>\n"
+                    + "        <button type=\"button\" class=\"btn btn-primary btn-lg btn-block\" (click)=\"salvarImediatamente()\" >\n"
+                    + "           Para inserir " + tipo.getSimpleName().toUpperCase() + " é necessário salvar este " + atributo.getDeclaringClass().getSimpleName().toUpperCase() + " primeiro. Para salvar imediatamente click aqui.\n"
+                    + "        </button>\n"
+                    + "  </div>\n\n"
+                    + "");
+
             geraComponenteOneToMany(atributo, pastaModulo);
             geraHTMLOneToMany(atributo, pastaModulo);
 
