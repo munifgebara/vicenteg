@@ -436,7 +436,7 @@ public class GeraFront extends AbstractMojo {
             String nomeArquivo = atributo.getDeclaringClass().getSimpleName().toLowerCase() + "-" + atributo.getName().toLowerCase();
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"selecionado.version!==null \">\n"
-                    + "    <app-" + nomeArquivo + " [itens]=\"selecionado." + atributo.getName() + "\" [proprietario]=\"selecionado\"></app-" + nomeArquivo + ">\n\n"
+                    + "    <app-" + nomeArquivo + " [itens]=\"(selecionado." + atributo.getName() + "===null?[]:selecionado." + atributo.getName() + ")\" [proprietario]=\"selecionado\"></app-" + nomeArquivo + ">\n\n"
                     + "  </div>\n"
                     + "");
             geraComponenteOneToMany(atributo, pastaModulo);
@@ -737,7 +737,9 @@ public class GeraFront extends AbstractMojo {
                 + "    }\n"
                 + "\n"
                 + "    ngOnInit() {\n"
+                + "        this.atualiza();\n"
                 + "    }\n"
+                + "\n"
                 + "    edita(evento) {\n"
                 + "        this." + mClasse + "Service.getOne(evento).then(obj => {\n"
                 + "            this.editando = true;\n"
