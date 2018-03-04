@@ -368,7 +368,7 @@ public class GeraFront extends AbstractMojo {
                 + "    </div>\n"
                 + "    <div class=\"row\">\n"
                 + "      <div class=\"col-sm-6 text-left\">\n"
-                + "        <button type=\"button\" class=\"btn btn-danger\" (click)=\"excluir()\" *ngIf=\"selecionado.version !== null\">\n"
+                + "        <button type=\"button\" class=\"btn btn-danger\" (click)=\"excluir()\" [disabled]=\"notNew(selecionado)&&!canDelete(selecionado)\">\n"
                 + "          <i class=\"far fa-trash-alt\"></i> Excluir\n"
                 + "        </button>\n"
                 + "      </div>\n"
@@ -376,7 +376,7 @@ public class GeraFront extends AbstractMojo {
                 + "        <button type=\"button\" class=\"btn btn-warning\" (click)=\"cancelar()\">\n"
                 + "          <i class=\"far fa-times-circle\"></i> Cancelar\n"
                 + "        </button>\n"
-                + "        <button type=\"button\" class=\"btn btn-success\" (click)=\"salvar()\">\n"
+                + "        <button type=\"button\" class=\"btn btn-success\" (click)=\"salvar()\"  [disabled]=\"notNew(selecionado)&&!canUpdate(selecionado)\" >\n"
                 + "          <i class=\"far fa-save\"></i> Salvar\n"
                 + "        </button>\n"
                 + "      </div>\n"
@@ -384,7 +384,6 @@ public class GeraFront extends AbstractMojo {
                 + "    <div class=\"alert alert-danger\" role=\"alert\" *ngIf=\"erro\">\n"
                 + "      {{erro|json}}\n"
                 + "    </div>\n"
-                + "  </div>\n\n"
                 + "");
 
 //        fw.write(""
@@ -420,9 +419,16 @@ public class GeraFront extends AbstractMojo {
         } else if (atributo.isAnnotationPresent(ManyToMany.class)) {
             tipo = Util.getTipoGenerico(atributo);
             fw.write(""
-                    + "  <div class=\"col-sm-12 margin-bottom\">\n"
+                    + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"(isNew(selecionado)||canUpdate(selecionado))\" >\n"
                     + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
                     + "      <vic-many-to-many [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" ></vic-many-to-many>\n"
+                    + "  </div>\n"
+                    + "\n");
+
+            fw.write(""
+                    + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"!(isNew(selecionado)||canUpdate(selecionado))\" >\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
+                    + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" class=\"form-control\" [disabled]=\"notNew(selecionado)&&!canUpdate(selecionado)\" />\n"
                     + "  </div>\n"
                     + "\n");
 
@@ -430,13 +436,13 @@ public class GeraFront extends AbstractMojo {
             tipo = Util.getTipoGenerico(atributo);
             String nomeArquivo = atributo.getDeclaringClass().getSimpleName().toLowerCase() + "-" + atributo.getName().toLowerCase();
             fw.write(""
-                    + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"selecionado.version!==null \">\n"
+                    + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"selecionado.version!==null   \">\n"
                     + "    <app-" + nomeArquivo + " [itens]=\"(selecionado." + atributo.getName() + "===null?[]:selecionado." + atributo.getName() + ")\" [proprietario]=\"selecionado\"></app-" + nomeArquivo + ">\n"
                     + "  </div>\n\n"
                     + "");
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"selecionado.version==null \">\n"
-                    + "        <h2>"+atributo.getName().toUpperCase()+"</h2>\n"
+                    + "        <h2>" + atributo.getName().toUpperCase() + "</h2>\n"
                     + "        <button type=\"button\" class=\"btn btn-primary btn-lg btn-block\" (click)=\"salvarImediatamente()\" >\n"
                     + "           Para inserir " + tipo.getSimpleName().toUpperCase() + " é necessário salvar este " + atributo.getDeclaringClass().getSimpleName().toUpperCase() + " primeiro. Para salvar imediatamente click aqui.\n"
                     + "        </button>\n"
@@ -448,9 +454,15 @@ public class GeraFront extends AbstractMojo {
 
         } else if (atributo.isAnnotationPresent(ManyToOne.class)) {
             fw.write(""
-                    + "  <div class=\"col-sm-12 margin-bottom\">\n"
+                    + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"(isNew(selecionado)||canUpdate(selecionado))\" >\n"
                     + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
                     + "      <vic-many-to-one [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" ></vic-many-to-one>\n"
+                    + "  </div>\n"
+                    + "\n");
+            fw.write(""
+                    + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"!(isNew(selecionado)||canUpdate(selecionado))\" >\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
+                    + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "." + Util.primeiroAtributo(tipo).getName() + "\" class=\"form-control\" [disabled]=\"notNew(selecionado)&&!canUpdate(selecionado)\" />\n"
                     + "  </div>\n"
                     + "\n");
 
@@ -465,7 +477,7 @@ public class GeraFront extends AbstractMojo {
         } else {
             fw.write("  <div class=\"col-sm-12 margin-bottom\">\n"
                     + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
-                    + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" class=\"form-control\" />\n"
+                    + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" class=\"form-control\" [disabled]=\"notNew(selecionado)&&!canUpdate(selecionado)\" />\n"
                     + "  </div>\n"
                     + "\n");
         }
@@ -809,6 +821,29 @@ public class GeraFront extends AbstractMojo {
                 + "            });\n"
                 + "    }\n"
                 + "\n"
+                + "  public isOwner(obj): boolean {\n"
+                + "    return obj && (obj.r.charAt(0) !== '_');\n"
+                + "  }\n"
+                + "  public commonGroup(obj): boolean {\n"
+                + "    return obj && (obj.r.charAt(1) !== '_');\n"
+                + "  }\n"
+                + "  public canRead(obj): boolean {\n"
+                + "    return obj && (obj.r.charAt(2) !== '_');\n"
+                + "  }\n"
+                + "  public canUpdate(obj): boolean {\n"
+                + "    return obj && (obj.r.charAt(3) !== '_');\n"
+                + "  }\n"
+                + "  public canDelete(obj): boolean {\n"
+                + "    return obj && (obj.r.charAt(4) !== '_');\n"
+                + "  }\n"
+                + "\n"
+                + "  public isNew(obj): boolean {\n"
+                + "    return obj.version === null;\n"
+                + "  }\n"
+                + "\n"
+                + "  public notNew(obj): boolean {\n"
+                + "    return obj.version !== null;\n"
+                + "  }"
                 + "}\n"
                 + "");
         fw.close();
@@ -833,7 +868,7 @@ public class GeraFront extends AbstractMojo {
         fw.write(""
                 + "<div class=\"container\" *ngIf=\"!editando\">\n"
                 + "    <h2>" + atributo.getName().toUpperCase() + " {{itens.length}}\n"
-                + "        <button type=\"button\" class=\"btn btn-success\" (click)=\"edita('new')\">\n"
+                + "        <button type=\"button\" class=\"btn btn-success\" (click)=\"edita('new')\" [disabled]=\"notNew(proprietario)&&!canUpdate(proprietario)\">\n"
                 + "            <i class=\"far fa-file\"></i> Novo</button>\n"
                 + "    </h2>\n"
                 + "    <vic-tabela [dados]=\"criaVicReturnItens()\" [colunas]=\"colunas\" (acao)=\"edita($event)\" [selecionaColunas]=\"false\"></vic-tabela>\n"
@@ -848,14 +883,14 @@ public class GeraFront extends AbstractMojo {
             }
         }
         fw.write(""
-                + "    </div>\n"
+                //                + "    </div>\n"
                 + "    <div class=\"row\">\n"
                 + "        <div class=\"col-sm-12 text-right\">\n"
                 + "            <button type=\"button\" class=\"btn btn-warning\" (click)=\"cancelar()\">\n"
                 + "                <i class=\"far fa-times-circle\"></i> Cancelar</button>\n"
-                + "            <button type=\"button\" class=\"btn btn-success\" (click)=\"salvar()\">\n"
+                + "            <button type=\"button\" class=\"btn btn-success\" (click)=\"salvar()\" [disabled]=\"notNew(proprietario)&&!canUpdate(proprietario)\">\n"
                 + "                <i class=\"far fa-save\"></i> Salvar</button>\n"
-                + "            <button type=\"button\" class=\"btn btn-danger\" (click)=\"excluir()\">\n"
+                + "            <button type=\"button\" class=\"btn btn-danger\" (click)=\"excluir()\" [disabled]=\"notNew(proprietario)&&!canUpdate(proprietario)\">\n"
                 + "                <i class=\"far fa-delete\"></i>Excluir</button>\n"
                 + "        </div>\n"
                 + "    </div>\n"
