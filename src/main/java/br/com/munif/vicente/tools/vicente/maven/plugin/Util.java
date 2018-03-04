@@ -239,6 +239,8 @@ public class Util {
             }
             brTest.close();
         }
+        
+        
 
         FileWriter fileWriter = new FileWriter(arquivo, b);
         //VICIGNORE
