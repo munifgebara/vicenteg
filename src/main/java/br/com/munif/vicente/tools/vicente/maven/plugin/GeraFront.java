@@ -848,13 +848,11 @@ public class GeraFront extends AbstractMojo {
                 + "");
         fw.close();
         String arquivoModule = pastaModulo + "/" + atributo.getDeclaringClass().getSimpleName().toLowerCase() + ".module.ts";
-        String pastaModulo2 = Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/" + atributo.getDeclaringClass().getSimpleName().toLowerCase());
-        String arquivoModule2 = pastaModulo2 + "/" + atributo.getDeclaringClass().getSimpleName().toLowerCase() + ".module.ts";
         
-        //System.out.println(arquivoModule.equals(arquivoModule2) + " " + arquivoModule + " " + arquivoModule2);
-        Util.adicionaLinha(arquivoModule2, "/*IMPORTS*/", "import { " + nomeClasseCoponente + "Component } from './detalhes/" + nomeArquivo + ".component';");
         
-        Util.adicionaLinha(arquivoModule2, "/*DECLARATIONS*/", "      " + nomeClasseCoponente + "Component,");
+        Util.adicionaLinha(arquivoModule, "/*IMPORTS*/", "import { " + nomeClasseCoponente + "Component } from './detalhes/" + nomeArquivo + ".component';");
+        
+        Util.adicionaLinha(arquivoModule, "/*DECLARATIONS*/", "      " + nomeClasseCoponente + "Component,");
         
     }
     
