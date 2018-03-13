@@ -42,16 +42,16 @@ import org.codehaus.plexus.util.FileUtils;
  */
 @Mojo(name = "front", requiresDependencyResolution = ResolutionScope.RUNTIME)
 public class GeraFront extends AbstractMojo {
-
+    
     @Parameter(property = "project", required = true, readonly = true)
     private MavenProject project;
-
+    
     @Parameter(property = "entidade", defaultValue = "all")
     private String nomeCompletoEntidade;
     private String nomePacoteBase;
     private String nomeEntidade;
     private ClassLoader classLoader;
-
+    
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         classLoader = Util.getClassLoader(project);
@@ -62,7 +62,7 @@ public class GeraFront extends AbstractMojo {
                     geraFront(c.getCanonicalName());
                     //System.out.println("mvn br.com.munif.vicente:g:0.0.1-SNAPSHOT:front -Dentidade=" + c.getCanonicalName());
                 }
-
+                
             } else {
                 geraFront(nomeCompletoEntidade);
             }
@@ -72,9 +72,9 @@ public class GeraFront extends AbstractMojo {
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(GeraFront.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+        
     }
-
+    
     public void geraFront(String nce) throws IOException, ClassNotFoundException {
         nomePacoteBase = nce.substring(0, nce.lastIndexOf(".domain"));
         nomeEntidade = nce.substring(nce.lastIndexOf('.') + 1);
@@ -109,16 +109,16 @@ public class GeraFront extends AbstractMojo {
                     + "    " + nomeEntidade + "Service,"
                     + "");
         }
-
+        
     }
-
+    
     private void criaPastasModulo(String pastaModulo) throws IOException {
         new File(pastaModulo).mkdir();
         new File(pastaModulo + "/crud").mkdir();
         new File(pastaModulo + "/detalhes").mkdir();
         new File(pastaModulo + "/lista").mkdir();
     }
-
+    
     private void geraModuleTS(String pastaModulo, String nce, String npb, String ne) throws IOException {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
@@ -156,7 +156,7 @@ public class GeraFront extends AbstractMojo {
         );
         fw.close();
     }
-
+    
     private void geraServiceTS(String pastaModulo, String nce, String npb, String ne) throws IOException {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
@@ -178,7 +178,7 @@ public class GeraFront extends AbstractMojo {
         );
         fw.close();
     }
-
+    
     private void geraRoutingModuleTS(String pastaModulo, String nce, String npb, String ne) throws IOException {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
@@ -209,7 +209,7 @@ public class GeraFront extends AbstractMojo {
         );
         fw.close();
     }
-
+    
     private void geraCrudTS(String pastaModulo, String nce, String npb, String ne) throws IOException {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
@@ -230,7 +230,7 @@ public class GeraFront extends AbstractMojo {
         );
         fw.close();
     }
-
+    
     private void geraCrudCSS(String pastaModulo, String nce, String npb, String ne) throws IOException {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
@@ -241,7 +241,7 @@ public class GeraFront extends AbstractMojo {
         );
         fw.close();
     }
-
+    
     private void geraCrudHTML(String pastaModulo, String nce, String npb, String ne) throws IOException {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
@@ -255,14 +255,14 @@ public class GeraFront extends AbstractMojo {
         );
         fw.close();
     }
-
+    
     private void geraDetalhesTS(String pastaModulo, String nce, String npb, String ne) throws IOException, ClassNotFoundException {
-
+        
         Class classe = classLoader.loadClass(nce);
-
+        
         List<Field> atributos = Util.getTodosAtributosNaoBase(classe);
         Field primeiroAtributo = atributos.get(0);
-
+        
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
         String arquivo = pastaModulo + "/detalhes/detalhes.component.ts";
@@ -280,7 +280,7 @@ public class GeraFront extends AbstractMojo {
                     fw.write("import { " + f.getType().getSimpleName() + "Service } from '../../" + f.getType().getSimpleName().toLowerCase() + "/" + f.getType().getSimpleName().toLowerCase() + ".service';\n");
                     jaImportou.add(f.getType());
                 }
-
+                
             }
         }
         for (Field f : atributos) {
@@ -292,7 +292,7 @@ public class GeraFront extends AbstractMojo {
                 }
             }
         }
-
+        
         fw.write(""
                 + "import { VicReturn } from '../../vic-components/comum/vic-return';\n"
                 + "import { SuperDetalhesComponent } from '../../vic-components/comum/super-detalhes';\n"
@@ -320,7 +320,7 @@ public class GeraFront extends AbstractMojo {
         );
         fw.close();
     }
-
+    
     private void geraDetalhesCSS(String pastaModulo, String nce, String npb, String ne) throws IOException {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
@@ -339,7 +339,7 @@ public class GeraFront extends AbstractMojo {
         );
         fw.close();
     }
-
+    
     private void geraDetalhesHTML(String pastaModulo, String nce, String npb, String ne) throws IOException, ClassNotFoundException {
         Class classe = classLoader.loadClass(nce);
         List<Field> atributos = Util.getTodosAtributosNaoBase(classe);
@@ -359,11 +359,11 @@ public class GeraFront extends AbstractMojo {
                 + "    <h2>{{ selecionado." + primeiroAtributo.getName() + "| uppercase }}</h2>\n"
                 + "\n"
                 + "    <div class=\"row\">\n\n");
-
+        
         for (Field atributo : atributos) {
             geraCampoAtributo(fw, atributo, pastaModulo);
         }
-
+        
         fw.write(""
                 + "    </div>\n"
                 + "    <div class=\"row\">\n"
@@ -409,13 +409,13 @@ public class GeraFront extends AbstractMojo {
 //        );
         fw.close();
     }
-
+    
     public void geraCampoAtributo(FileWriter fw, Field atributo, String pastaModulo) throws IOException {
         Class tipo = atributo.getType();
         if (atributo.isAnnotationPresent(OneToOne.class)) {
             fw.write("<!--OneToOne-->\n"
                     + "\n");
-
+            
         } else if (atributo.isAnnotationPresent(ManyToMany.class)) {
             tipo = Util.getTipoGenerico(atributo);
             fw.write(""
@@ -424,14 +424,14 @@ public class GeraFront extends AbstractMojo {
                     + "      <vic-many-to-many [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" ></vic-many-to-many>\n"
                     + "  </div>\n"
                     + "\n");
-
+            
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"!(isNew(selecionado)||canUpdate(selecionado))\" >\n"
                     + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
                     + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" class=\"form-control\" [disabled]=\"notNew(selecionado)&&!canUpdate(selecionado)\" />\n"
                     + "  </div>\n"
                     + "\n");
-
+            
         } else if (atributo.isAnnotationPresent(OneToMany.class)) {
             tipo = Util.getTipoGenerico(atributo);
             String nomeArquivo = atributo.getDeclaringClass().getSimpleName().toLowerCase() + "-" + atributo.getName().toLowerCase();
@@ -448,10 +448,10 @@ public class GeraFront extends AbstractMojo {
                     + "        </button>\n"
                     + "  </div>\n\n"
                     + "");
-
+            
             geraComponenteOneToMany(atributo, pastaModulo);
             geraHTMLOneToMany(atributo, pastaModulo);
-
+            
         } else if (atributo.isAnnotationPresent(ManyToOne.class)) {
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"(isNew(selecionado)||canUpdate(selecionado))\" >\n"
@@ -465,7 +465,7 @@ public class GeraFront extends AbstractMojo {
                     + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "." + Util.primeiroAtributo(tipo).getName() + "\" class=\"form-control\" [disabled]=\"notNew(selecionado)&&!canUpdate(selecionado)\" />\n"
                     + "  </div>\n"
                     + "\n");
-
+            
         } else if (atributo.getType().equals(ZonedDateTime.class)) {
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\">\n"
@@ -482,7 +482,7 @@ public class GeraFront extends AbstractMojo {
                     + "\n");
         }
     }
-
+    
     private void geraListaTS(String pastaModulo, String nce, String npb, String ne) throws IOException, ClassNotFoundException {
         Class classe = classLoader.loadClass(nce);
         List<Field> atributos = Util.getTodosAtributosNaoBase(classe);
@@ -512,7 +512,7 @@ public class GeraFront extends AbstractMojo {
         for (String s : chapa) {
             fw.write("    " + s + "\n");
         }
-
+        
         fw.write(""
                 + "  ];\n"
                 + "\n"
@@ -524,7 +524,7 @@ public class GeraFront extends AbstractMojo {
         );
         fw.close();
     }
-
+    
     private void geraListaCSS(String pastaModulo, String nce, String npb, String ne) throws IOException {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
@@ -537,7 +537,7 @@ public class GeraFront extends AbstractMojo {
         );
         fw.close();
     }
-
+    
     private void geraListaHTML(String pastaModulo, String nce, String npb, String ne) throws IOException {
         FileWriter fw = null;
         String minusculas = ne.toLowerCase();
@@ -564,13 +564,13 @@ public class GeraFront extends AbstractMojo {
         );
         fw.close();
     }
-
+    
     private String getClassName(File f, File baseFolder) {
         String compleName = Utils.windowsSafe(f.getAbsolutePath());
         String baseFolderName = Utils.windowsSafe(baseFolder.getAbsolutePath());
         return compleName.replaceFirst(baseFolderName, "").replace(".class", "").replaceAll("/", ".").replaceFirst(".", "");
     }
-
+    
     public List<Class> scanFolder(File folder, File baseFolder) {
         List<Class> toReturn = new ArrayList<>();
         File[] fs = folder.listFiles();
@@ -594,19 +594,19 @@ public class GeraFront extends AbstractMojo {
         }
         return toReturn;
     }
-
+    
     public List<Class> scanClasses() throws IOException {
         List<Class> toReturn = new ArrayList<>();
         File f = new File(project.getFile().getParent() + "/target/classes/");
         toReturn.addAll(scanFolder(f, f));
         return toReturn;
     }
-
+    
     private List<String> chapa(Class c) {
         i = 0;
         return chapa(c, "");
     }
-
+    
     private List<String> chapa(Class c, String prefixo) {
         List<String> toReturn = new ArrayList<>();
         List<Field> atributos = Util.getTodosAtributosNaoBase(c);
@@ -623,14 +623,14 @@ public class GeraFront extends AbstractMojo {
                     toReturn.addAll(chapa(a.getType(), prefixo + nome + "."));
                 }
             }
-
+            
         });
-
+        
         return toReturn;
     }
-
+    
     private int i;
-
+    
     private String resolve(String prefixo, Field atributo) {
         List<String> ignorados = Arrays.asList(new String[]{"descricao", "nome", "valor"});
         String name = atributo.getName();
@@ -642,10 +642,10 @@ public class GeraFront extends AbstractMojo {
             label = primeiraMaiuscula(splitCamelCase(pedacos[length - 2]));
         }
         List<String> collect = Arrays.asList(pedacos).stream().map(s -> ('"' + s + '"')).collect(Collectors.toList());
-
+        
         return "{ active: " + (i++ < 4) + ", comparisonOperator: \"" + comparador(atributo.getType()) + "\", field: \"" + nomeCompleto + "\", label: \"" + label + "\",pedacos: " + collect + "},";
     }
-
+    
     private String splitCamelCase(String s) { //by polygenelubricants https://stackoverflow.com/users/276101/polygenelubricants
         return s.replaceAll(
                 String.format("%s|%s|%s",
@@ -656,14 +656,14 @@ public class GeraFront extends AbstractMojo {
                 " "
         );
     }
-
+    
     private String comparador(Class<?> type) {
         if (type.equals(String.class)) {
             return "STARTS_WITH";
         }
         return "EQUAL";
     }
-
+    
     private void geraComponenteOneToMany(Field atributo, String pastaModulo) throws IOException {
         Class classe = Util.getTipoGenerico(atributo);
         List<Field> atributos = Util.getTodosAtributosNaoBase(classe);
@@ -676,7 +676,7 @@ public class GeraFront extends AbstractMojo {
             atributoMappedBy = oneToMany.mappedBy();
         }
         FileWriter fw = abreArquivo(arquivo, false);
-
+        
         fw.write("//Munif\n"
                 + "import { Component, OnInit, Input } from '@angular/core';\n"
                 + "import { VicReturn } from '../../vic-components/comum/vic-return';\n"
@@ -708,7 +708,7 @@ public class GeraFront extends AbstractMojo {
                 }
             }
         }
-
+        
         jaImportou.forEach(a -> System.out.print(a.getSimpleName() + " "));
         System.out.println("");
         fw.write(""
@@ -848,12 +848,16 @@ public class GeraFront extends AbstractMojo {
                 + "");
         fw.close();
         String arquivoModule = pastaModulo + "/" + atributo.getDeclaringClass().getSimpleName().toLowerCase() + ".module.ts";
-        Util.adicionaLinha(arquivoModule, "/*IMPORTS*/", "import { " + nomeClasseCoponente + "Component } from './detalhes/" + nomeArquivo + ".component';");
-
-        Util.adicionaLinha(arquivoModule, "/*DECLARATIONS*/", "      " + nomeClasseCoponente + "Component,");
-
+        String pastaModulo2 = Util.windowsSafe(project.getFile().getParent() + "/front/project/src/app/" + atributo.getDeclaringClass().getSimpleName().toLowerCase());
+        String arquivoModule2 = pastaModulo2 + "/" + atributo.getDeclaringClass().getSimpleName().toLowerCase() + ".module.ts";
+        
+        System.out.println(arquivoModule.equals(arquivoModule2) + " " + arquivoModule + " " + arquivoModule2);
+        Util.adicionaLinha(arquivoModule2, "/*IMPORTS*/", "import { " + nomeClasseCoponente + "Component } from './detalhes/" + nomeArquivo + ".component';");
+        
+        Util.adicionaLinha(arquivoModule2, "/*DECLARATIONS*/", "      " + nomeClasseCoponente + "Component,");
+        
     }
-
+    
     private void geraHTMLOneToMany(Field atributo, String pastaModulo) throws IOException {
         Class tipo = Util.getTipoGenerico(atributo);
         String nomeArquivo = atributo.getDeclaringClass().getSimpleName().toLowerCase() + "-" + atributo.getName().toLowerCase();
@@ -863,7 +867,7 @@ public class GeraFront extends AbstractMojo {
         if (oneToMany != null && oneToMany.mappedBy() != null && (!oneToMany.mappedBy().trim().isEmpty())) {
             atributoMappedBy = oneToMany.mappedBy();
         }
-
+        
         FileWriter fw = abreArquivo(arquivo, false);
         fw.write(""
                 + "<div class=\"container\" *ngIf=\"!editando\">\n"
@@ -897,9 +901,9 @@ public class GeraFront extends AbstractMojo {
                 + "    </div>\n"
                 + "</div>\n"
                 + "\n");
-
+        
         fw.close();
-
+        
     }
-
+    
 }
