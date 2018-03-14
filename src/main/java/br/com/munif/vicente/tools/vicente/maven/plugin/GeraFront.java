@@ -281,6 +281,7 @@ public class GeraFront extends AbstractMojo {
                 + "import { VicReturn } from '../../vic-components/comum/vic-return';\n"
                 + "import { SuperDetalhesComponent } from '../../vic-components/comum/super-detalhes';\n"
                 + "import { FormGroup, FormBuilder, Validators } from '@angular/forms';\n"
+                + "import { BaseEntity } from '../../vic-components/comum/base-entity';\n"
                 + "\n"
                 + "\n"
                 + "@Component({\n"
@@ -312,8 +313,11 @@ public class GeraFront extends AbstractMojo {
                 + "      });\n"
                 + "      this.detalhesForm = this.fb.group({\n");
         for (Field f : atributos) {
-            fw.write(
-                    "        '" + f.getName() + "': ['', Validators.compose([Validators.required])],\n");
+            if (f.isAnnotationPresent(ManyToOne.class)) {
+                fw.write("        '" + f.getName() + "': [new BaseEntity(), Validators.compose([Validators.required])],\n");
+                continue;
+            }
+            fw.write("        '" + f.getName() + "': ['', Validators.compose([Validators.required])],\n");
         }
 
         fw.write("      });\n"
@@ -322,6 +326,10 @@ public class GeraFront extends AbstractMojo {
                 + "        this.selecionado = obj;\n"
                 + "        this.detalhesForm = this.fb.group({\n");
         for (Field f : atributos) {
+//            if (f.isAnnotationPresent(ManyToOne.class)) {
+//                fw.write("          '" + f.getName() + "': [this.selecionado['" + f.getName() + "']." + Util.primeiroAtributo(f.getClass()).getName() + ", Validators.compose([Validators.required])],\n");
+//                continue;
+//            }
             fw.write("          '" + f.getName() + "': [this.selecionado['" + f.getName() + "'], Validators.compose([Validators.required])],\n");
         }
         //+ "          'descricao': [this.selecionado['descricao'], Validators.compose([Validators.required])],\n"
@@ -477,13 +485,16 @@ public class GeraFront extends AbstractMojo {
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"(isNew(selecionado)||canUpdate(selecionado))\" >\n"
                     + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
-                    + "      <vic-many-to-one [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" ></vic-many-to-one>\n"
+                    + "      <vic-many-to-one [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" nomeNoForm=\"" + atributo.getName() + "\" [group]=\"detalhesForm\" ></vic-many-to-one>\n"
+                    + "          <div class=\"alert alert-danger\" *ngIf=\"!detalhesForm.controls['" + atributo.getName() + "'].valid && detalhesForm.controls['" + atributo.getName() + "'].touched\" style=\"margin-top:10px\">\n"
+                    + "            O campo " + atributo.getName().toUpperCase() + " é obrigatório.\n"
+                    + "          </div>\n"
                     + "  </div>\n"
                     + "\n");
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"!(isNew(selecionado)||canUpdate(selecionado))\" >\n"
                     + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
-                    + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "." + Util.primeiroAtributo(tipo).getName() + "\" class=\"form-control\" [disabled]=\"notNew(selecionado)&&!canUpdate(selecionado)\" />\n"
+                    + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + " \" formControlName=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "." + Util.primeiroAtributo(tipo).getName() + "\" class=\"form-control\" [disabled]=\"notNew(selecionado)&&!canUpdate(selecionado)\" />\n"
                     + "  </div>\n"
                     + "\n");
 
@@ -491,8 +502,11 @@ public class GeraFront extends AbstractMojo {
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\">\n"
                     + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
-                    + "      <input [owlDateTime]=\"dt" + atributo.getName().toUpperCase() + "\" [owlDateTimeTrigger]=\"dt" + atributo.getName().toUpperCase() + "\" type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" class=\"form-control\" />\n"
+                    + "      <input [owlDateTime]=\"dt" + atributo.getName().toUpperCase() + "\" [owlDateTimeTrigger]=\"dt" + atributo.getName().toUpperCase() + "\" formControlName=\"" + atributo.getName() + " type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" class=\"form-control\" />\n"
                     + "      <owl-date-time #dt" + atributo.getName().toUpperCase() + "></owl-date-time>\n"
+                    + "          <div class=\"alert alert-danger\" *ngIf=\"!detalhesForm.controls['" + atributo.getName() + "'].valid && detalhesForm.controls['" + atributo.getName() + "'].touched\" style=\"margin-top:10px\">\n"
+                    + "            O campo " + atributo.getName().toUpperCase() + " é obrigatório.\n"
+                    + "          </div>\n"
                     + "  </div>\n"
                     + "\n");
         } else {
@@ -501,7 +515,7 @@ public class GeraFront extends AbstractMojo {
                     + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" formControlName=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" class=\"form-control\" [disabled]=\"notNew(selecionado)&&!canUpdate(selecionado)\" />\n"
                     + "          <div class=\"alert alert-danger\" *ngIf=\"!detalhesForm.controls['" + atributo.getName() + "'].valid && detalhesForm.controls['" + atributo.getName() + "'].touched\" style=\"margin-top:10px\">\n"
                     + "            O campo " + atributo.getName().toUpperCase() + " é obrigatório.\n"
-                    + "          </div>"
+                    + "          </div>\n"
                     + "  </div>\n"
                     + "\n");
         }
@@ -872,8 +886,7 @@ public class GeraFront extends AbstractMojo {
                 + "");
         fw.close();
         String arquivoModule = pastaModulo + "/" + atributo.getDeclaringClass().getSimpleName().toLowerCase() + ".module.ts";
-        
-        
+
         Util.adicionaLinha(arquivoModule, "/*IMPORTS*/", "import { " + nomeClasseCoponente + "Component } from './detalhes/" + nomeArquivo + ".component';");
 
         Util.adicionaLinha(arquivoModule, "/*DECLARATIONS*/", "      " + nomeClasseCoponente + "Component,");
