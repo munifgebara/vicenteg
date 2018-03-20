@@ -291,8 +291,13 @@ public class GeraFront extends AbstractMojo {
                 + "})\n"
                 + "export class DetalhesComponent extends SuperDetalhesComponent {\n"
                 + "\n"
-                + "detalhesForm: FormGroup;\n"
-                + "\n"
+                + "  detalhesForm: FormGroup;\n");
+        boolean temManyToMany = temManyToMany(atributos);
+        if (temManyToMany) {
+            fw.write("  mostrar = true;\n");
+        }
+
+        fw.write("\n"
                 + "  constructor(protected service: " + ne + "Service, protected router: Router, protected route: ActivatedRoute");
         for (Class tipo : jaImportou) {
             fw.write(",protected " + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service:" + tipo.getSimpleName() + "Service");
@@ -300,44 +305,74 @@ public class GeraFront extends AbstractMojo {
         fw.write(""
                 + ",\n"
                 + "    private fb: FormBuilder, protected location: Location) {\n"
-                + "    super(service,router,route, location);\n"
-                + "         this.initForm();\n"
+                + "    super(service,router,route);\n"
                 + "  }\n"
                 + "\n"
                 + "\n"
                 + "initForm() {\n"
                 + "\n"
-                + "    if (this.selecionado === undefined || this.selecionado.version === null) {\n"
-                + "      this.service.getOne(\"new\").then(obj => {\n"
-                + "        this.selecionado = obj;\n"
-                + "      });\n"
                 + "      this.detalhesForm = this.fb.group({\n");
         for (Field f : atributos) {
             if (f.isAnnotationPresent(ManyToOne.class)) {
                 fw.write("        '" + f.getName() + "': [new BaseEntity(), Validators.compose([Validators.required])],\n");
                 continue;
             }
+            if (f.isAnnotationPresent(ManyToMany.class)) {
+                continue;
+            }
             fw.write("        '" + f.getName() + "': ['', Validators.compose([Validators.required])],\n");
         }
 
-        fw.write("      });\n"
-                + "    } else {\n"
-                + "      this.service.getOne(this.selecionado[\"id\"]).then(obj => {\n"
-                + "        this.selecionado = obj;\n"
-                + "        this.detalhesForm = this.fb.group({\n");
-        for (Field f : atributos) {
-//            if (f.isAnnotationPresent(ManyToOne.class)) {
-//                fw.write("          '" + f.getName() + "': [this.selecionado['" + f.getName() + "']." + Util.primeiroAtributo(f.getClass()).getName() + ", Validators.compose([Validators.required])],\n");
-//                continue;
-//            }
-            fw.write("          '" + f.getName() + "': [this.selecionado['" + f.getName() + "'], Validators.compose([Validators.required])],\n");
+        fw.write("      });\n");
+        if (temManyToMany) {
+            fw.write("    this.mostrar = true;\n");
         }
-        //+ "          'descricao': [this.selecionado['descricao'], Validators.compose([Validators.required])],\n"
-        fw.write("        });\n"
-                + "      });\n"
-                + "    }\n"
+
+        fw.write("  }\n\n"
+                + "voltar() {\n"
+                + "    this.router.navigate(['../..'], { relativeTo: this.route });\n"
+                + "  }\n\n"
+                + "cancelar() {\n");
+
+        if (temManyToMany) {
+            fw.write("    this.mostrar = false;\n");
+        }
+        fw.write("\n"
+                + "    let id = this.selecionado[\"version\"] == null ? \"new\" : this.selecionado[\"id\"];\n"
                 + "\n"
-                + "  }"
+                + "    this.service.getOne(id).then(obj => {\n"
+                + "      this.selecionado = obj;\n"
+                + "      this.detalhesForm = this.fb.group({\n");
+        
+         for (Field f : atributos) {
+            if (f.isAnnotationPresent(ManyToMany.class)) {
+                continue;
+            }
+
+            fw.write("          '" + f.getName() + "': [this.selecionado['" + f.getName() + "'], Validators.compose([Validators.required])],\n");
+         }
+         
+         fw.write("            })\n");
+        
+        if (temManyToMany) {
+            fw.write("    this.mostrar = true;\n");
+        }
+        fw.write("    })\n"
+                + "  }\n\n"
+                + " salvar() {\n"
+                + "    this.service.update(this.selecionado)\n"
+                + "      .then(salvo => {\n"
+                + "        this.selecionado = salvo;\n"
+                + "        this.msg.createSuccessAlert(\"Objeto salvo\", \"Operação realizada com sucesso\");\n"
+                + "\n"
+                + "        this.location.go(\"" + classe.getSimpleName().toLowerCase() + "/detalhes/\" + salvo.id);\n"
+                + "\n"
+                + "        this.initForm();\n"
+                + "      })\n"
+                + "      .catch(erro => {\n"
+                + "        this.msg.createErrorAlert(\"Erro\", erro);\n"
+                + "      });\n"
+                + "  }\n"
                 + "}\n"
                 + ""
         );
@@ -448,9 +483,9 @@ public class GeraFront extends AbstractMojo {
         } else if (atributo.isAnnotationPresent(ManyToMany.class)) {
             tipo = Util.getTipoGenerico(atributo);
             fw.write(""
-                    + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"(isNew(selecionado)||canUpdate(selecionado))\" >\n"
+                    + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"(isNew(selecionado)||canUpdate(selecionado)  && mostrar )\" >\n"
                     + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
-                    + "      <vic-many-to-many [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" ></vic-many-to-many>\n"
+                    + "      <vic-many-to-many [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" [group]=\"detalhesForm\" ></vic-many-to-many>\n"
                     + "  </div>\n"
                     + "\n");
 
@@ -939,6 +974,27 @@ public class GeraFront extends AbstractMojo {
 
         fw.close();
 
+    }
+
+    /**
+     * Metodo verifica se em uma lista de atributos (field) tem algum que é
+     *
+     * @ManyToMany.
+     *
+     * @param lista atributos para serem verificados.
+     *
+     */
+    private boolean temManyToMany(List<Field> lista) {
+
+        if (lista == null || lista.isEmpty()) {
+            return false;
+        }
+
+        if (lista.stream().anyMatch((f) -> (f.isAnnotationPresent(ManyToMany.class)))) {
+            return true;
+        }
+
+        return false;
     }
 
 }
