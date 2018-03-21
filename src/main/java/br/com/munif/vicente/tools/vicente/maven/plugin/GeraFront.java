@@ -447,7 +447,7 @@ public class GeraFront extends AbstractMojo {
                 + "    </div>\n"
                 + "    </form>\n"
                 + "   </div>\n"
-                + "    <div class=\"row\" *ngIf=\"!isNew(selecionado)\">\n"
+                + "    <div class=\"row\" *ngIf=\"notNew(selecionado)\">\n"
                 + "      <img [src]=\"drawsvg\">\n"
                 + "    </div> "
                 + "</div>\n"
