@@ -168,6 +168,9 @@ public class Util {
 
     public static void adicionaLinha(String nomeArquivo, String linhaMarcador, String linhaNova) throws IOException {
         String arquivo = nomeArquivo;
+        if (!new File(arquivo).exists()){
+            return;
+        }
         String arquivoTmp = nomeArquivo + "-tmp";
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(arquivoTmp));

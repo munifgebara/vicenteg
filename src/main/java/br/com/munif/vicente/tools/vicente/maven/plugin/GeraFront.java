@@ -343,17 +343,17 @@ public class GeraFront extends AbstractMojo {
                 + "    this.service.getOne(id).then(obj => {\n"
                 + "      this.selecionado = obj;\n"
                 + "      this.detalhesForm = this.fb.group({\n");
-        
-         for (Field f : atributos) {
+
+        for (Field f : atributos) {
             if (f.isAnnotationPresent(ManyToMany.class)) {
                 continue;
             }
 
             fw.write("          '" + f.getName() + "': [this.selecionado['" + f.getName() + "'], Validators.compose([Validators.required])],\n");
-         }
-         
-         fw.write("            })\n");
-        
+        }
+
+        fw.write("            })\n");
+
         if (temManyToMany) {
             fw.write("    this.mostrar = true;\n");
         }
@@ -447,6 +447,9 @@ public class GeraFront extends AbstractMojo {
                 + "    </div>\n"
                 + "    </form>\n"
                 + "   </div>\n"
+                + "    <div class=\"row\" *ngIf=\"!isNew(selecionado)\">\n"
+                + "      <img [src]=\"drawsvg\">\n"
+                + "    </div> "
                 + "</div>\n"
                 + "");
 
