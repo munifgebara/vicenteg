@@ -314,19 +314,19 @@ public class GeraFront extends AbstractMojo {
                 + "      this.detalhesForm = this.fb.group({\n");
         for (Field f : atributos) {
             if (f.isAnnotationPresent(ManyToOne.class)) {
-                fw.write("        '" + f.getName() + "': [new BaseEntity(), Validators.compose([Validators.required])],\n");
+                fw.write("        '" + f.getName() + "': [this.selecionado['" + f.getName() + "']" +(atributos.get(0) == f ?", Validators.compose([Validators.required]) ":"" )+" ],\n");
                 continue;
             }
             if (f.isAnnotationPresent(ManyToMany.class)) {
                 continue;
             }
-            fw.write("        '" + f.getName() + "': ['', Validators.compose([Validators.required])],\n");
+            fw.write("        '" + f.getName() + "': [this.selecionado['" + f.getName() + "']" +(atributos.get(0) == f ?", Validators.compose([Validators.required]) ":"" )+"],\n");
         }
 
         fw.write("      });\n");
-        if (temManyToMany) {
-            fw.write("    this.mostrar = true;\n");
-        }
+//        if (temManyToMany) {
+//            fw.write("    this.mostrar = true;\n");
+//        }
 
         fw.write("  }\n\n"
                 + "voltar() {\n"
@@ -342,17 +342,8 @@ public class GeraFront extends AbstractMojo {
                 + "\n"
                 + "    this.service.getOne(id).then(obj => {\n"
                 + "      this.selecionado = obj;\n"
-                + "      this.detalhesForm = this.fb.group({\n");
-
-        for (Field f : atributos) {
-            if (f.isAnnotationPresent(ManyToMany.class)) {
-                continue;
-            }
-
-            fw.write("          '" + f.getName() + "': [this.selecionado['" + f.getName() + "'], Validators.compose([Validators.required])],\n");
-        }
-
-        fw.write("            })\n");
+                + "      this.initForm();\n");
+  
 
         if (temManyToMany) {
             fw.write("    this.mostrar = true;\n");
@@ -486,7 +477,7 @@ public class GeraFront extends AbstractMojo {
         } else if (atributo.isAnnotationPresent(ManyToMany.class)) {
             tipo = Util.getTipoGenerico(atributo);
             fw.write(""
-                    + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"(isNew(selecionado)||canUpdate(selecionado)  && mostrar )\" >\n"
+                    + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"((isNew(selecionado)||canUpdate(selecionado))  && mostrar )\" >\n"
                     + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
                     + "      <vic-many-to-many [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" [group]=\"detalhesForm\" ></vic-many-to-many>\n"
                     + "  </div>\n"
@@ -696,7 +687,7 @@ public class GeraFront extends AbstractMojo {
                 if (prefixo.endsWith(nome + ".")) {
                     System.out.println("----> Possivel recursao na classe  " + c.getSimpleName() + " atributo " + nome + " prefixo " + prefixo);
                 } else {
-                    toReturn.addAll(chapa(a.getType(), prefixo + nome + "."));
+                    //toReturn.addAll(chapa(a.getType(), prefixo + nome + "."));
                 }
             }
 
