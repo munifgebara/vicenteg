@@ -116,6 +116,7 @@ public class GeraFront extends AbstractMojo {
                 + "import { ListaComponent } from './lista/lista.component';\n"
                 + "import { DetalhesComponent } from './detalhes/detalhes.component';\n"
                 + "import { BrowserModule } from '@angular/platform-browser'\n;"
+                + "import { TooltipModule } from 'ng2-tooltip-directive';\n"
                 + "\n"
                 + "/*IMPORTS*/\n"
                 + "\n"
@@ -126,6 +127,7 @@ public class GeraFront extends AbstractMojo {
                 + "    " + ne + "RoutingModule,\n"
                 + "    VicComponentsModule,\n"
                 + "    BrowserModule,    \n"
+                + "    TooltipModule,    \n"
                 + "    ReactiveFormsModule \n"
                 + "  ],\n"
                 + "  declarations: [\n"
@@ -478,14 +480,14 @@ public class GeraFront extends AbstractMojo {
             tipo = Util.getTipoGenerico(atributo);
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"((isNew(selecionado)||canUpdate(selecionado))  && mostrar )\" >\n"
-                    + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + "</label><span *ngIf=\"detalhesForm.controls['" + atributo.getName() + "'].validator != null\" tooltip=\"Este campo é obrigatório.\" placement=\"top\">*</span>:\n"
                     + "      <vic-many-to-many [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" [group]=\"detalhesForm\" ></vic-many-to-many>\n"
                     + "  </div>\n"
                     + "\n");
 
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"!(isNew(selecionado)||canUpdate(selecionado))\" >\n"
-                    + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + "</label><span *ngIf=\"detalhesForm.controls['" + atributo.getName() + "'].validator != null\" tooltip=\"Este campo é obrigatório.\" placement=\"top\">*</span>:\n"
                     + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" class=\"form-control\" [disabled]=\"notNew(selecionado)&&!canUpdate(selecionado)\" />\n"
                     + "  </div>\n"
                     + "\n");
@@ -513,7 +515,7 @@ public class GeraFront extends AbstractMojo {
         } else if (atributo.isAnnotationPresent(ManyToOne.class)) {
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"(isNew(selecionado)||canUpdate(selecionado))\" >\n"
-                    + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
+                   + "    <label>" + atributo.getName().toUpperCase() + "</label><span *ngIf=\"detalhesForm.controls['" + atributo.getName() + "'].validator != null\" tooltip=\"Este campo é obrigatório.\" placement=\"top\">*</span>:\n"
                     + "      <vic-many-to-one [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" nomeNoForm=\"" + atributo.getName() + "\" [group]=\"detalhesForm\" ></vic-many-to-one>\n"
                     + "          <div class=\"alert alert-danger\" *ngIf=\"!detalhesForm.controls['" + atributo.getName() + "'].valid && detalhesForm.controls['" + atributo.getName() + "'].touched\" style=\"margin-top:10px\">\n"
                     + "            O campo " + atributo.getName().toUpperCase() + " é obrigatório.\n"
@@ -522,7 +524,7 @@ public class GeraFront extends AbstractMojo {
                     + "\n");
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"!(isNew(selecionado)||canUpdate(selecionado))\" >\n"
-                    + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + "</label><span *ngIf=\"detalhesForm.controls['" + atributo.getName() + "'].validator != null\" tooltip=\"Este campo é obrigatório.\" placement=\"top\">*</span>:\n"
                     + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + " \" formControlName=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "." + Util.primeiroAtributo(tipo).getName() + "\" class=\"form-control\" [disabled]=\"notNew(selecionado)&&!canUpdate(selecionado)\" />\n"
                     + "  </div>\n"
                     + "\n");
@@ -540,7 +542,7 @@ public class GeraFront extends AbstractMojo {
                     + "\n");
         } else {
             fw.write("  <div class=\"col-sm-12 margin-bottom\">\n"
-                    + "    <label>" + atributo.getName().toUpperCase() + ":</label>\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + "</label><span *ngIf=\"detalhesForm.controls['" + atributo.getName() + "'].validator != null\" tooltip=\"Este campo é obrigatório.\" placement=\"top\">*</span>:\n"
                     + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" formControlName=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" class=\"form-control\" [disabled]=\"notNew(selecionado)&&!canUpdate(selecionado)\" />\n"
                     + "          <div class=\"alert alert-danger\" *ngIf=\"!detalhesForm.controls['" + atributo.getName() + "'].valid && detalhesForm.controls['" + atributo.getName() + "'].touched\" style=\"margin-top:10px\">\n"
                     + "            O campo " + atributo.getName().toUpperCase() + " é obrigatório.\n"
