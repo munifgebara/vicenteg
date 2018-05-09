@@ -361,6 +361,7 @@ public class GeraFront extends AbstractMojo {
                 + "        this.location.go(\"" + classe.getSimpleName().toLowerCase() + "/detalhes/\" + salvo.id);\n"
                 + "\n"
                 + "        this.initForm();\n"
+                + "        window.scrollTo(0, 0);"
                 + "      })\n"
                 + "      .catch(erro => {\n"
                 + "        this.msg.createErrorAlert(\"Erro\", erro);\n"
@@ -480,14 +481,14 @@ public class GeraFront extends AbstractMojo {
             tipo = Util.getTipoGenerico(atributo);
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"((isNew(selecionado)||canUpdate(selecionado))  && mostrar )\" >\n"
-                    + "    <label>" + atributo.getName().toUpperCase() + "</label><span *ngIf=\"detalhesForm.controls['" + atributo.getName() + "'].validator != null\" tooltip=\"Este campo é obrigatório.\" placement=\"top\">*</span>:\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + "</label>:\n"
                     + "      <vic-many-to-many [(valor)]=\"selecionado." + atributo.getName() + "\" [service]=\"" + Util.primeiraMinuscula(tipo.getSimpleName()) + "Service\" atributoLabel=\"" + Util.primeiroAtributo(tipo).getName() + "\" [group]=\"detalhesForm\" ></vic-many-to-many>\n"
                     + "  </div>\n"
                     + "\n");
 
             fw.write(""
                     + "  <div class=\"col-sm-12 margin-bottom\" *ngIf=\"!(isNew(selecionado)||canUpdate(selecionado))\" >\n"
-                    + "    <label>" + atributo.getName().toUpperCase() + "</label><span *ngIf=\"detalhesForm.controls['" + atributo.getName() + "'].validator != null\" tooltip=\"Este campo é obrigatório.\" placement=\"top\">*</span>:\n"
+                    + "    <label>" + atributo.getName().toUpperCase() + "</label>:\n"
                     + "      <input type=\"text\" id=\"id" + atributo.getName() + "\" name=\"" + atributo.getName() + "\" placeholder=\"" + atributo.getName().toUpperCase() + "\" [(ngModel)]=\"selecionado." + atributo.getName() + "\" class=\"form-control\" [disabled]=\"notNew(selecionado)&&!canUpdate(selecionado)\" />\n"
                     + "  </div>\n"
                     + "\n");
